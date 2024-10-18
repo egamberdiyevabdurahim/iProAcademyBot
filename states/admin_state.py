@@ -1,35 +1,6 @@
 from aiogram.fsm.state import StatesGroup, State
 
 
-# USER
-class AddUserState(StatesGroup):
-    telegram_id = State()
-
-
-class DeleteUserState(StatesGroup):
-    telegram_id = State()
-
-
-class ShowActivityState(StatesGroup):
-    user_id = State()
-
-
-class ActivateUserState(StatesGroup):
-    user_id = State()
-    starts_at = State()
-    ends_at = State()
-    duration = State()
-
-
-# PENDING USER
-class AddPendingUserState(StatesGroup):
-    telegram_id = State()
-
-
-class DeletePendingUserState(StatesGroup):
-    telegram_id = State()
-
-
 # PANIC ARRAY
 class AddPanicArrayState(StatesGroup):
     panic_array_name = State()
@@ -57,6 +28,15 @@ class DeletePanicState(StatesGroup):
     panic_id = State()
 
 
+class EditPanicState(StatesGroup):
+    panic_id = State()
+    panic_new_name_uz = State()
+    panic_new_name_ru = State()
+    panic_new_name_en = State()
+    panic_array_id = State()
+    panic_new_code = State()
+
+
 # USERSPACE
 class AddUserSpaceState(StatesGroup):
     user_space_name_uz = State()
@@ -67,6 +47,14 @@ class AddUserSpaceState(StatesGroup):
 
 class DeleteUserSpaceState(StatesGroup):
     user_space_id = State()
+
+
+class EditUserSpaceState(StatesGroup):
+    user_space_id = State()
+    user_space_new_name_uz = State()
+    user_space_new_name_ru = State()
+    user_space_new_name_en = State()
+    user_space_new_code = State()
 
 
 # CHIPSET
@@ -110,6 +98,15 @@ class DeleteI2CState(StatesGroup):
     i2c_id = State()
 
 
+class EditI2CState(StatesGroup):
+    i2c_id = State()
+    i2c_new_name_uz = State()
+    i2c_new_name_ru = State()
+    i2c_new_name_en = State()
+    chipset_id = State()
+    category_id = State()
+
+
 # AOP PANIC
 class AddAopPanicState(StatesGroup):
     aop_panic_name_uz = State()
@@ -122,6 +119,14 @@ class DeleteAopPanicState(StatesGroup):
     aop_panic_id = State()
 
 
+class EditAopPanicState(StatesGroup):
+    aop_panic_id = State()
+    panic_name_uz = State()
+    panic_name_ru = State()
+    panic_name_en = State()
+    panic_code = State()
+
+
 # ALPHABET
 class AddAlphabetState(StatesGroup):
     alphabet_name_uz = State()
@@ -132,3 +137,71 @@ class AddAlphabetState(StatesGroup):
 
 class DeleteAlphabetState(StatesGroup):
     alphabet_id = State()
+
+
+class EditAlphabetState(StatesGroup):
+    alphabet_id = State()
+    alphabet_new_name_uz = State()
+    alphabet_new_name_ru = State()
+    alphabet_new_name_en = State()
+    alphabet_new_code = State()
+
+
+# MODEL
+class AddModelState(StatesGroup):
+    name = State()
+
+
+class DeleteModelState(StatesGroup):
+    model_id = State()
+
+
+class EditModelState(StatesGroup):
+    model_id = State()
+    new_name = State()
+
+
+# SWAP
+class AddSwapState(StatesGroup):
+    swap_model_id = State()
+    swap_title = State()
+    swap_name_uz = State()
+    swap_name_ru = State()
+    swap_name_en = State()
+    swap_photos = State()
+    end = State()
+
+
+class DeleteSwapState(StatesGroup):
+    swap_id = State()
+
+
+class EditSwapState(StatesGroup):
+    swap_id = State()
+    swap_new_model_id = State()
+    swap_new_title = State()
+    swap_new_name_uz = State()
+    swap_new_name_ru = State()
+    swap_new_name_en = State()
+    swap_photos = State()
+    end = State()
+
+
+# ITUNES
+class AddITunesState(StatesGroup):
+    itunes_error_code = State()
+    itunes_name_uz = State()
+    itunes_name_ru = State()
+    itunes_name_en = State()
+
+
+class DeleteITunesState(StatesGroup):
+    itunes_id = State()
+
+
+class EditITunesState(StatesGroup):
+    itunes_id = State()
+    itunes_new_error_code = State()
+    itunes_new_name_uz = State()
+    itunes_new_name_ru = State()
+    itunes_new_name_en = State()

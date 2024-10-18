@@ -10,6 +10,7 @@ from queries.for_users import get_user_by_telegram_id_query
 from states.user_states import I2CState
 from user.user.user_handlers import i2c_go
 from utils.activity_maker import activity_maker
+from utils.addititons import BUTTONS_AND_COMMANDS
 from utils.for_auth import is_user_registered
 from utils.proteceds import send_protected_message
 from utils.validator import not_registered_message, is_active, not_active_message
@@ -22,10 +23,17 @@ async def i2c_to_category_go(message: Message, state: FSMContext):
         if await is_active(message):
             await activity_maker(message)
 
+            if message.text in BUTTONS_AND_COMMANDS:
+                await send_protected_message(message, "Try Again!")
+                await state.clear()
+                return
+
             await state.update_data(to_category=get_i2c_category_by_name_query(message.text)['id'])
 
-            if await i2c_menu(message.text):
-                await send_protected_message(message, f"{message.text}", reply_markup=await i2c_menu(message.text))
+            language = get_user_by_telegram_id_query(message.from_user.id)['language_code']
+
+            if await i2c_menu(message.text, language):
+                await send_protected_message(message, f"{message.text}", reply_markup=await i2c_menu(message.text, language))
                 await state.set_state(I2CState.to_chipset)
 
             else:

@@ -4,11 +4,12 @@ from aiogram.types import Message
 
 from buttons.for_user import panic_menu
 from queries.for_panic import get_all_panics_query, get_panic_by_code_query
-from queries.for_panic_array import get_all_panic_arrays_query, get_panic_array_by_id_query
+from queries.for_panic_array import get_all_panic_arrays_query
 from queries.for_users import get_user_by_telegram_id_query
 from states.user_states import PanicState
 from user.user.user_handlers import panic_go
 from utils.activity_maker import activity_maker
+from utils.addititons import BUTTONS_AND_COMMANDS
 from utils.for_auth import is_user_registered
 from utils.proteceds import send_protected_message
 from utils.validator import not_registered_message, is_active, not_active_message
@@ -16,7 +17,7 @@ from utils.validator import not_registered_message, is_active, not_active_messag
 user_panic_router = Router()
 
 
-@user_panic_router.message(F.text == "🔙Back To Array")
+@user_panic_router.message(F.text.in_({"🔙Back To Array", "🔙Вернуться к Array меню", "🔙Array menyusiga qaytish"}))
 async def back_to_array(message: Message, state: FSMContext):
     if is_user_registered(message.from_user.id):
         if await is_active(message):
@@ -37,12 +38,14 @@ async def panic_array_go(message: Message, state: FSMContext):
         if await is_active(message):
             await activity_maker(message)
 
+            language = get_user_by_telegram_id_query(message.from_user.id)['language_code']
+
             # Fetch all panic array names
             panic_arrays = [data['name'] for data in get_all_panic_arrays_query()]
 
             # Check if the message text matches one of the panic array names
             if message.text in panic_arrays:
-                await send_protected_message(message, f"{message.text}", reply_markup=await panic_menu(message.text))
+                await send_protected_message(message, f"{message.text}", reply_markup=await panic_menu(message.text, language))
                 await state.set_state(PanicState.after_array)
 
             else:
@@ -60,6 +63,11 @@ async def panic_sender(message: Message, state: FSMContext):
     if is_user_registered(message.from_user.id):
         if await is_active(message):
             await activity_maker(message)
+
+            if message.text in BUTTONS_AND_COMMANDS:
+                await send_protected_message(message, "Try Again!")
+                await state.clear()
+                return
 
             panic_datas = [data['code'] for data in get_all_panics_query()]
             user_language = get_user_by_telegram_id_query(message.from_user.id)

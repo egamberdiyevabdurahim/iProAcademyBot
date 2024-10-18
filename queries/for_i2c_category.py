@@ -51,7 +51,7 @@ def delete_i2c_category_query(category_id: int) -> None:
 
 
 # GET--------------------------------------------------------------------------------------------------
-def get_i2c_category_by_id_query(category_id: int) -> DictRow:
+def get_i2c_category_by_id_query(category_id) -> DictRow:
     """
     Retrieves an I2C category by its ID.
     """

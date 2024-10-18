@@ -44,7 +44,7 @@ def update_i2c_query(id_of: int, new_name_uz: str, new_name_ru: str, new_name_en
     """
     query = """
     UPDATE i2c
-    SET name_uz=%s, name_ru=%s, name_en=%s, chipset_id=%s, user_id=%s, category_id=%s, updated_at=%s,
+    SET name_uz=%s, name_ru=%s, name_en=%s, chipset_id=%s, user_id=%s, category_id=%s, updated_at=%s
     WHERE id=%s
     """
     execute_query(query, (new_name_uz, new_name_ru, new_name_en, chipset_id, user_id,
@@ -62,11 +62,11 @@ def delete_i2c_query(id_of: int) -> None:
 
 
 # GET--------------------------------------------------------------------------------------------------
-def get_i2c_by_id_query(id_of: int) -> DictRow:
+def get_i2c_by_id_query(id_of) -> DictRow:
     """
     Retrieves an I2C device by its ID.
     """
-    query = "SELECT * FROM i2c WHERE id=%s AND status=%a"
+    query = "SELECT * FROM i2c WHERE id=%s AND status=%s"
     return execute_query(query, (id_of, True), fetch="one")
 
 

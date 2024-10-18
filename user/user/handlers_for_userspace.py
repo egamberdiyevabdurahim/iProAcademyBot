@@ -7,6 +7,7 @@ from queries.for_userspace import get_userspace_by_code_query
 from states.user_states import UserSpaceState
 from user.user.user_handlers import userspace_go
 from utils.activity_maker import activity_maker
+from utils.addititons import BUTTONS_AND_COMMANDS
 from utils.for_auth import is_user_registered
 from utils.proteceds import send_protected_message
 from utils.validator import not_registered_message, is_active, not_active_message
@@ -19,6 +20,11 @@ async def user_space_data_go(message: Message, state: FSMContext):
     if is_user_registered(message.from_user.id):
         if await is_active(message):
             await activity_maker(message)
+
+            if message.text in BUTTONS_AND_COMMANDS:
+                await send_protected_message(message, "Try Again!")
+                await state.clear()
+                return
 
             data = get_userspace_by_code_query(message.text)
             user_language = get_user_by_telegram_id_query(message.from_user.id)['language_code']

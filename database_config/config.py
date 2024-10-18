@@ -19,3 +19,11 @@ DB_CONFIG = {
 
 
 TOKEN = os.getenv('TOKEN')
+
+
+FIRST_API_URL = os.getenv('FIRST_API_URL')
+FIRST_API_USER = os.getenv('FIRST_API_USER')
+FIRST_API_KEY = os.getenv('FIRST_API_KEY')
+
+
+GROUP_ID = os.getenv('GROUP_ID')

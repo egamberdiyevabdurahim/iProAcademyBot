@@ -47,7 +47,7 @@ def delete_panic_array_query(panic_array_id: int) -> None:
 
 
 # GET--------------------------------------------------------------------------------------------------
-def get_panic_array_by_id_query(panic_array_id: int) -> DictRow:
+def get_panic_array_by_id_query(panic_array_id) -> DictRow:
     """
     Retrieves a panic array by its ID.
     """

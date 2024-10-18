@@ -51,7 +51,7 @@ def delete_chipset_query(chipset_id: int) -> None:
 
 
 # GET--------------------------------------------------------------------------------------------------
-def get_chipset_by_id_query(chipset_id: int) -> DictRow:
+def get_chipset_by_id_query(chipset_id) -> DictRow:
     """
     Retrieves a chipset by its ID.
     """

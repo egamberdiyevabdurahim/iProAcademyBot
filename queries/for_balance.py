@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from psycopg2.extras import DictRow
 
 from database_config.db_settings import execute_query
@@ -26,16 +28,25 @@ def create_balance_table_query() -> None:
 
 def insert_balance_query(user_id: int, ends_at, for_month: bool=False, for_three_month: bool=False,
                          for_six_month: bool=False, for_nine_month: bool=False, for_year: bool=False,
-                         starts_at=None) -> None:
+                         starts_at=None, is_active=True) -> None:
     """
     Inserts a new balance record into the balance table.
     """
     query = """
-    INSERT INTO balance (user_id, for_month, for_three_month, for_six_month, for_nine_month, for_year, starts_at, ends_at)
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+    INSERT INTO balance (user_id, for_month, for_three_month, for_six_month, for_nine_month, for_year, starts_at, ends_at, is_active)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
     """
     execute_query(query, (user_id, for_month, for_three_month, for_six_month, for_nine_month, for_year,
-                          starts_at, ends_at))
+                          starts_at, ends_at, is_active))
+    return None
+
+
+def activate_balance_by_id_query(balance_id) -> None:
+    """
+    Activates a balance record by its ID.
+    """
+    query = "UPDATE balance SET is_active=%s WHERE id=%s"
+    execute_query(query, (True, balance_id))
     return None
 
 
@@ -126,3 +137,17 @@ def get_all_active_balance_query() -> list:
         ORDER BY ends_at
     """
     return execute_query(query, fetch="all")
+
+
+def get_all_future_active_balance_query() -> list:
+    """
+    Retrieves all active balance records from the database where both is_active and status are TRUE.
+    """
+    query = """
+        SELECT * 
+        FROM balance 
+        WHERE is_active = FALSE AND starts_at = %s
+        AND status = TRUE 
+        ORDER BY starts_at
+    """
+    return execute_query(query, (datetime.date(datetime.now()),), fetch="all")

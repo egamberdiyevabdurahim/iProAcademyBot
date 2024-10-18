@@ -1,54 +1,10 @@
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 
 admin_main_menu = ReplyKeyboardMarkup(keyboard=[
-    [KeyboardButton(text="Users Management")],
     [KeyboardButton(text="Apple Management")],
     [KeyboardButton(text="Android Management")],
     [KeyboardButton(text="🔝Main Menu")]],
-    resize_keyboard=True,
-    input_field_placeholder="Choose")
-
-
-before_user_management_menu = ReplyKeyboardMarkup(keyboard=[
-    [KeyboardButton(text="User Management")],
-    [KeyboardButton(text="Pending User Management")],
-    [KeyboardButton(text="🔙Back to Admin Menu Management"), KeyboardButton(text="🔝Main Menu")]],
-    resize_keyboard=True,
-    input_field_placeholder="Choose")
-
-
-user_management_menu = ReplyKeyboardMarkup(keyboard=[
-    [KeyboardButton(text="Add User"), KeyboardButton(text="Delete User")],
-    [KeyboardButton(text="Edit User"), KeyboardButton(text="Show Users")],
-    [KeyboardButton(text="Show User Log"), KeyboardButton(text="Show All Users Log")],
-    [KeyboardButton(text="Activate User"), KeyboardButton(text="Show Active Users")],
-    [KeyboardButton(text="Show All Balances")],
-    [KeyboardButton(text="🔙Back to User Menu"), KeyboardButton(text="🔝Main Menu")]],
-    resize_keyboard=True,
-    input_field_placeholder="Choose")
-
-
-activate_user_menu = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text="for a Month", callback_data="for_month")],
-    [InlineKeyboardButton(text="for 3 Months", callback_data="for_three_month")],
-    [InlineKeyboardButton(text="for 6 Months", callback_data="for_six_month")],
-    [InlineKeyboardButton(text="for 9 Months", callback_data="for_nine_month")],
-    [InlineKeyboardButton(text="for a Year", callback_data="for_year")]])
-
-
-edit_user_menu = ReplyKeyboardMarkup(keyboard=[
-    [KeyboardButton(text="First Name"), KeyboardButton(text="Last Name")],
-    [KeyboardButton(text="Phone Number")],
-    [KeyboardButton(text="🔙Back"), KeyboardButton(text="🔝Main Menu")]],
-    resize_keyboard=True,
-    input_field_placeholder="Choose")
-
-
-pending_user_management_menu = ReplyKeyboardMarkup(keyboard=[
-    [KeyboardButton(text="Add Pending User"), KeyboardButton(text="Delete Pending User")],
-    [KeyboardButton(text="Show Pending Users")],
-    [KeyboardButton(text="🔙Back to User Menu"), KeyboardButton(text="🔝Main Menu")]],
     resize_keyboard=True,
     input_field_placeholder="Choose")
 
@@ -59,7 +15,9 @@ apple_management_menu = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton(text="UserSpace Management"), KeyboardButton(text="Alphabet Management")],
     [KeyboardButton(text="Chipset Management"), KeyboardButton(text="i2c Category Management")],
     [KeyboardButton(text="i2c Management"), KeyboardButton(text="AOP Panic Management")],
-    [KeyboardButton(text="🔝Main Menu")]],
+    [KeyboardButton(text="Model Management"), KeyboardButton(text="Swap Helper Management")],
+    [KeyboardButton(text="iTunes Management")],
+    [KeyboardButton(text="🔙Back to Admin Menu Management"), KeyboardButton(text="🔝Main Menu")]],
     resize_keyboard=True,
     input_field_placeholder="Choose")
 
@@ -80,13 +38,6 @@ panic_management_menu = ReplyKeyboardMarkup(keyboard=[
     input_field_placeholder="Choose")
 
 
-edit_panic_menu = ReplyKeyboardMarkup(keyboard=[
-    [KeyboardButton(text="Name"), KeyboardButton(text="Code")],
-    [KeyboardButton(text="Array")]],
-    resize_keyboard=True,
-    input_field_placeholder="Choose")
-
-
 user_space_management_menu = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton(text="Add User Space"), KeyboardButton(text="Delete User Space")],
     [KeyboardButton(text="Edit User Space"), KeyboardButton(text="Show User Spaces")],
@@ -95,22 +46,10 @@ user_space_management_menu = ReplyKeyboardMarkup(keyboard=[
     input_field_placeholder="Choose")
 
 
-edit_user_space_menu = ReplyKeyboardMarkup(keyboard=[
-    [KeyboardButton(text="Name"), KeyboardButton(text="Code")]],
-    resize_keyboard=True,
-    input_field_placeholder="Choose")
-
-
 alphabet_management_menu = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton(text="Add Alphabet"), KeyboardButton(text="Delete Alphabet")],
     [KeyboardButton(text="Edit Alphabet"), KeyboardButton(text="Show Alphabets")],
     [KeyboardButton(text="🔙Back To Apple Management"), KeyboardButton(text="🔝Main Menu")]],
-    resize_keyboard=True,
-    input_field_placeholder="Choose")
-
-
-edit_alphabet_menu = ReplyKeyboardMarkup(keyboard=[
-    [KeyboardButton(text="Name"), KeyboardButton(text="Code")]],
     resize_keyboard=True,
     input_field_placeholder="Choose")
 
@@ -139,14 +78,6 @@ i2c_management_menu = ReplyKeyboardMarkup(keyboard=[
     input_field_placeholder="Choose")
 
 
-edit_i2c_menu = ReplyKeyboardMarkup(keyboard=[
-    [KeyboardButton(text="Name")],
-    [KeyboardButton(text="Chipset")],
-    [KeyboardButton(text="Category")]],
-    resize_keyboard=True,
-    input_field_placeholder="Choose")
-
-
 aop_panic_management_menu = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton(text="Add AOP Panic"), KeyboardButton(text="Delete AOP Panic")],
     [KeyboardButton(text="Edit AOP Panic"), KeyboardButton(text="Show AOP Panics")],
@@ -155,8 +86,26 @@ aop_panic_management_menu = ReplyKeyboardMarkup(keyboard=[
     input_field_placeholder="Choose")
 
 
-edit_aop_panic_menu = ReplyKeyboardMarkup(keyboard=[
-    [KeyboardButton(text="Name"), KeyboardButton(text="Code")]],
+model_management_menu = ReplyKeyboardMarkup(keyboard=[
+    [KeyboardButton(text="Add Model"), KeyboardButton(text="Delete Model")],
+    [KeyboardButton(text="Edit Model"), KeyboardButton(text="Show Models")],
+    [KeyboardButton(text="🔙Back To Apple Management"), KeyboardButton(text="🔝Main Menu")]],
+    resize_keyboard=True,
+    input_field_placeholder="Choose")
+
+
+swap_helper_management_menu = ReplyKeyboardMarkup(keyboard=[
+    [KeyboardButton(text="Add Swap Helper"), KeyboardButton(text="Delete Swap Helper")],
+    [KeyboardButton(text="Edit Swap Helper"), KeyboardButton(text="Show Swap Helpers")],
+    [KeyboardButton(text="🔙Back To Apple Management"), KeyboardButton(text="🔝Main Menu")]],
+    resize_keyboard=True,
+    input_field_placeholder="Choose")
+
+
+itunes_management_menu = ReplyKeyboardMarkup(keyboard=[
+    [KeyboardButton(text="Add iTunes"), KeyboardButton(text="Delete iTunes")],
+    [KeyboardButton(text="Edit iTunes"), KeyboardButton(text="Show All iTunes")],
+    [KeyboardButton(text="🔙Back To Apple Management"), KeyboardButton(text="🔝Main Menu")]],
     resize_keyboard=True,
     input_field_placeholder="Choose")
 

@@ -1,7 +1,6 @@
 import psycopg2
 from psycopg2.extras import DictCursor
 import logging
-import asyncio
 from database_config.config import DB_CONFIG
 
 
@@ -48,6 +47,17 @@ class Database:
             logging.error(f"Exception during query execution: {e}")
             raise DatabaseError(f"Failed to execute query: {query}")
 
+    def execute_and_fetch(self, query, params=None):
+        """Execute a query (INSERT, UPDATE, DELETE) and fetch the result"""
+        try:
+            self.cursor.execute(query, params)
+            data = self.cursor.fetchone()
+            self.conn.commit()
+            return data
+        except Exception as e:
+            logging.error(f"Exception during execute_and_fetch: {e}")
+            raise DatabaseError(f"Failed to execute query: {query}")
+
     def fetchall(self, query, params=None):
         """Fetch multiple rows from the database"""
         try:
@@ -67,24 +77,14 @@ class Database:
             raise DatabaseError("Failed to fetch data.")
 
 
-async def execute_query(query, params=None, fetch=None):
+def execute_query(query, params=None, fetch=None):
     """Run blocking query using asyncio.run_in_executor to prevent blocking the event loop"""
-    loop = asyncio.get_running_loop()
-
-    def run_query():
-        with Database() as db:
-            if fetch == "all":
-                return db.fetchall(query, params)
-            elif fetch == "one":
-                return db.fetchone(query, params)
-            else:
-                db.execute(query, params)
-
-    try:
-        # Run the blocking query in an executor (thread)
-        result = await loop.run_in_executor(None, run_query)
-        return result
-    except DatabaseError as e:
-        logging.error(f"Database operation failed: {e}")
-    except Exception as e:
-        logging.error(f"Unexpected error occurred: {e}")
+    with Database() as db:
+        if fetch == "all":
+            return db.fetchall(query, params)
+        elif fetch == "one":
+            return db.fetchone(query, params)
+        elif fetch == "return":
+            return db.execute_and_fetch(query, params)
+        else:
+            db.execute(query, params)

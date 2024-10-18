@@ -24,6 +24,15 @@ class AlphabetsState(StatesGroup):
     to_data = State()
 
 
+class SwapState(StatesGroup):
+    to_data = State()
+    end = State()
+
+
+class ITunesState(StatesGroup):
+    to_data = State()
+
+
 # USER
 class EditPhoneNumberState(StatesGroup):
     new_phone_number = State()
@@ -31,3 +40,13 @@ class EditPhoneNumberState(StatesGroup):
 
 class EditLanguageState(StatesGroup):
     language_code = State()
+
+
+# TOOLS
+class ImeiCheckerState(StatesGroup):
+    imei = State()
+
+
+class ImeiGeneratorState(StatesGroup):
+    prefix = State()
+    count = State()

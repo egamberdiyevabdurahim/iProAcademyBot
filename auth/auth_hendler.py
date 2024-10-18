@@ -1,23 +1,35 @@
+from readline import clear_history
+
 from aiogram import Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
-from buttons.for_user import main_menu_first_uz, main_menu_first_ru, main_menu_first_en
-from queries.for_pending_users import delete_pending_user_by_telegram_id_query
+
 from queries.for_users import insert_user_query
+
 from states.auth_state import RegisterState
+
+from buttons.for_user import main_menu_first_uz, main_menu_first_ru, main_menu_first_en
 from buttons.for_auth import share_number_uz, share_number_rus, share_number_eng
+
 from utils.proteceds import send_protected_message
+
 
 router = Router()
 
 # Helper function to send language-specific main menu
 async def send_main_menu(message: Message, language_code: str):
     if language_code == 'uz':
-        await send_protected_message(message, "Menyu:", reply_markup=main_menu_first_uz)
+        await send_protected_message(message,
+                                     f"Assalomu Aleykum {message.from_user.first_name}\n"
+                                     f"iPro Acdemy-ga Xush Kelibsiz!", reply_markup=main_menu_first_uz)
     elif language_code == 'ru':
-        await send_protected_message(message, "Меню:", reply_markup=main_menu_first_ru)
+        await send_protected_message(
+            message, f"Добро Пожаловать в iProAcademy {message.from_user.first_name}!",
+            reply_markup=main_menu_first_ru)
     else:
-        await send_protected_message(message, "Menu:", reply_markup=main_menu_first_en)
+        await send_protected_message(message, f"Welcome to iPro Academy "
+                                              f"{message.from_user.first_name}!",
+                                     reply_markup=main_menu_first_en)
 
 
 @router.message(RegisterState.phone_number)
@@ -42,9 +54,6 @@ async def register_number(message: Message, state: FSMContext):
         # Perform database insertion
         insert_user_query(first_name=first_name, last_name=last_name, telegram_id=telegram_id,
                                 language_code=language_code, phone_number=phone_number)
-
-        # Delete the pending user entry
-        delete_pending_user_by_telegram_id_query(telegram_id=message.from_user.id)
 
         # Clear the state
         await state.clear()

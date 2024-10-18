@@ -13,7 +13,7 @@ from queries.for_users import get_user_by_telegram_id_query
 from states.admin_state import AddPanicArrayState, DeletePanicArrayState, EditPanicArrayState
 from utils.activity_maker import activity_maker
 
-from utils.addititons import BASE_PATH
+from utils.addititons import BASE_PATH, BUTTONS_AND_COMMANDS
 from utils.for_auth import is_user_registered
 from utils.proteceds import send_protected_message
 from utils.validator import not_admin_message, not_registered_message, is_active, not_active_message
@@ -75,12 +75,16 @@ async def add_panic_array_go(message: Message, state: FSMContext):
 
             try:
                 panic_array_name = message.text
+                if panic_array_name in BUTTONS_AND_COMMANDS:
+                    await send_protected_message(message, "Invalid!")
+                    return
+
                 panic_array_data = get_panic_array_by_name_query(panic_array_name)
                 if panic_array_data is not None:
                     await send_protected_message(message, f"Bunday Nomli Panic Array Mavjud!")
                     return
 
-                await send_protected_message(message, "Panic Array Created Successfully!")
+                await send_protected_message(message, f"{panic_array_name} - Panic Array Created Successfully!")
                 insert_panic_array_query(panic_array_name)
 
             except Exception as e:
@@ -131,6 +135,10 @@ async def delete_panic_array_go(message: Message, state: FSMContext):
 
             try:
                 panic_array_name = message.text
+                if panic_array_name in BUTTONS_AND_COMMANDS:
+                    await send_protected_message(message, "Invalid!")
+                    return
+
                 panic_array_data = get_panic_array_by_name_query(panic_array_name)
                 if panic_array_data is None:
                     await send_protected_message(message, f"Bunday Nomli Panic Array Mavjud emas!")
@@ -191,9 +199,14 @@ async def edit_panic_array_go(message: Message, state: FSMContext):
 
             try:
                 panic_array_name = message.text
+                if panic_array_name in BUTTONS_AND_COMMANDS:
+                    await send_protected_message(message, "Invalid!")
+                    return
+
                 panic_array_data = get_panic_array_by_name_query(panic_array_name)
                 if panic_array_data is None:
                     await send_protected_message(message, f"Bunday Nomli Panic Array Mavjud emas!")
+                    await state.clear()
                     await before_panic_array_management(message)
                     return
 
@@ -225,6 +238,10 @@ async def edit_panic_array_new_name(message: Message, state: FSMContext):
 
             try:
                 panic_array_new_name = message.text
+                if panic_array_new_name in BUTTONS_AND_COMMANDS:
+                    await send_protected_message(message, "Invalid!")
+                    return
+
                 panic_array_data = get_panic_array_by_name_query(panic_array_new_name)
                 if panic_array_data is not None:
                     await send_protected_message(message, f"Bunday Nomli Panic Array Allaqachon Mavjud!")

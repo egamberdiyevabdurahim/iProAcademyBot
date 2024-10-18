@@ -42,7 +42,7 @@ def update_userspace_query(userspace_id: int, new_name_uz: str, new_name_ru: str
     """
     query = ("""
     UPDATE userspace
-    SET name_uz=%s, name_ru=%s, name_en=%s, code=%s, updated_at=%s, language_id=%s
+    SET name_uz=%s, name_ru=%s, name_en=%s, code=%s, updated_at=%s
     WHERE id=%s AND status=%s""")
     execute_query(query, (new_name_uz, new_name_ru, new_name_en, code, datetime.now(), userspace_id, True))
     return None
@@ -58,7 +58,7 @@ def delete_userspace_query(userspace_id: int) -> None:
 
 
 # GET--------------------------------------------------------------------------------------------------
-def get_userspace_by_id_query(userspace_id: int) -> DictRow:
+def get_userspace_by_id_query(userspace_id) -> DictRow:
     """
     Retrieves a user space by its ID.
     """

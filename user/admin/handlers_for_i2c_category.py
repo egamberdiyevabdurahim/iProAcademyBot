@@ -11,7 +11,7 @@ from queries.for_users import get_user_by_telegram_id_query
 from states.admin_state import AddI2CCategoryState, \
     DeleteI2CCategoryState, EditI2CCategoryState
 from utils.activity_maker import activity_maker
-from utils.addititons import BASE_PATH
+from utils.addititons import BASE_PATH, BUTTONS_AND_COMMANDS
 from utils.for_auth import is_user_registered
 from utils.proteceds import send_protected_message
 from utils.validator import not_admin_message, not_registered_message, is_active, not_active_message
@@ -73,6 +73,10 @@ async def add_i2c_category_go(message: Message, state: FSMContext):
 
             try:
                 category_name = message.text
+                if category_name in BUTTONS_AND_COMMANDS:
+                    await send_protected_message(message, "Invalid!")
+                    return
+
                 category_data = get_i2c_category_by_name_query(category_name)
                 if category_data is not None:
                     await send_protected_message(message, "This i2c Category already exists.")
@@ -128,6 +132,10 @@ async def delete_i2c_category_go(message: Message, state: FSMContext):
 
             try:
                 category_name = message.text
+                if category_name in BUTTONS_AND_COMMANDS:
+                    await send_protected_message(message, "Invalid!")
+                    return
+
                 category_data = get_i2c_category_by_name_query(category_name)
                 if category_data is None:
                     await send_protected_message(message, "This i2c Category does not exist.")
@@ -232,9 +240,15 @@ async def edit_i2c_category_go(message: Message, state: FSMContext):
 
             try:
                 category_name = message.text
+                if category_name in BUTTONS_AND_COMMANDS:
+                    await send_protected_message(message, "Invalid!")
+                    await state.clear()
+                    return
+
                 category_data = get_i2c_category_by_name_query(category_name)
                 if category_data is None:
                     await send_protected_message(message, "This i2c Category does not exist.")
+                    await state.clear()
                     await before_i2c_category_management(message)
                     return
 
@@ -270,6 +284,10 @@ async def edit_i2c_category_new_name(message: Message, state: FSMContext):
 
             try:
                 i2c_category_new_name = message.text
+                if i2c_category_new_name in BUTTONS_AND_COMMANDS:
+                    await send_protected_message(message, "Invalid!")
+                    return
+
                 i2c_category_data = get_i2c_category_by_name_query(i2c_category_new_name)
                 if i2c_category_data is not None:
                     await send_protected_message(message, f"Bunday Nomli i2c Category Mavjud!")

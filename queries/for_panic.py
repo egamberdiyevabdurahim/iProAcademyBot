@@ -37,7 +37,7 @@ def insert_panic_query(name_uz: str, name_ru: str, name_en: str, code: str, arra
     return None
 
 
-def update_panic_query(panic_id: int, new_name_uz: str, new_name_ru: str, new_name_en: str, code: int, array_id: int) -> None:
+def update_panic_query(panic_id: int, new_name_uz: str, new_name_ru: str, new_name_en: str, code: str, array_id: int) -> None:
     """
     Updates a panic notification.
     """

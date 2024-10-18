@@ -69,7 +69,7 @@ def get_user_by_id_query(user_id) -> DictRow:
     return execute_query(query, (user_id, True), fetch="one")
 
 
-def get_user_by_telegram_id_query(telegram_id: int) -> DictRow:
+def get_user_by_telegram_id_query(telegram_id) -> DictRow:
     query = "SELECT * FROM users WHERE telegram_id = %s AND status = %s"
     return execute_query(query, (telegram_id, True), fetch="one")
 
@@ -97,3 +97,13 @@ def get_admin_users_query() -> list:
 def get_all_users_query() -> list:
     query = "SELECT * FROM users WHERE status = %s ORDER BY id DESC"
     return execute_query(query, (True,), fetch="all")
+
+
+def get_inactive_users_query() -> list:
+    query = """
+    SELECT * FROM users u
+    LEFT JOIN balance b ON u.id = b.user_id
+    WHERE u.status = %s AND (b.is_active = %s OR b IS NULL)
+    ORDER BY u.id DESC
+    """
+    return execute_query(query, (True, False), fetch="all")

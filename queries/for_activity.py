@@ -19,7 +19,7 @@ def create_activity_table_query() -> None:
     return None
 
 
-def insert_activity_query(user_id: int, text: str = None, with_id: str = None) -> None:
+def insert_activity_query(user_id: int, text: str = None, with_id = None) -> None:
     """
     Inserts a new activity into the activity table.
     """
@@ -67,3 +67,21 @@ def get_all_activities_query() -> list:
     ORDER BY created_at DESC;
     """
     return execute_query(query, fetch='all')
+
+
+def get_last_activity_by_user_id_query(user_id) -> DictRow:
+    """
+    Retrieves the last activity record by its user ID.
+    """
+    query = "SELECT * FROM activity WHERE user_id=%s ORDER BY created_at DESC LIMIT 1"
+    return execute_query(query, (user_id,), fetch="one")
+
+
+def get_yesterdays_first_activity_by_user_id_query(user_id) -> DictRow:
+    """
+    Retrieves the first activity record of the previous day by its user ID.
+    """
+    query = ("SELECT * FROM activity WHERE user_id=%s AND created_at >= NOW() - INTERVAL '1 day' "
+             "ORDER BY created_at ASC "
+             "LIMIT 1")
+    return execute_query(query, (user_id,), fetch="one")

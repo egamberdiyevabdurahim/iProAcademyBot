@@ -6,13 +6,14 @@ from aiogram.types import Message, FSInputFile
 
 
 from buttons.for_admin import user_space_management_menu
+from buttons.for_others import skip_menu
 from queries.for_users import get_user_by_telegram_id_query, get_user_by_id_query
 from queries.for_userspace import get_userspace_by_code_query, insert_userspace_query, delete_userspace_query, \
-    get_all_user_spaces_query
-from states.admin_state import AddUserSpaceState, DeleteUserSpaceState
+    get_all_user_spaces_query, get_userspace_by_id_query, update_userspace_query
+from states.admin_state import AddUserSpaceState, DeleteUserSpaceState, EditUserSpaceState
 from utils.activity_maker import activity_maker
 
-from utils.addititons import BASE_PATH
+from utils.addititons import BASE_PATH, BUTTONS_AND_COMMANDS
 from utils.for_auth import is_user_registered
 from utils.proteceds import send_protected_message
 from utils.validator import not_admin_message, not_registered_message, is_active, not_active_message
@@ -74,9 +75,15 @@ async def add_userspace_go(message: Message, state: FSMContext):
 
             try:
                 user_space_code = message.text
+                if user_space_code in BUTTONS_AND_COMMANDS:
+                    await send_protected_message(message, "Invalid!")
+                    await state.clear()
+                    return
+
                 user_space_data = get_userspace_by_code_query(user_space_code)
                 if user_space_data is not None:
                     await send_protected_message(message, f"Bu Codeli User Space Mavjud!")
+                    await state.clear()
                     return
 
                 await state.update_data(user_space_code=user_space_code)
@@ -106,6 +113,11 @@ async def add_userspace_name_uz(message: Message, state: FSMContext):
 
             try:
                 user_space_name_uz = message.text
+                if user_space_name_uz in BUTTONS_AND_COMMANDS:
+                    await send_protected_message(message, "Invalid!")
+                    await state.clear()
+                    return
+
                 await state.update_data(user_space_name_uz=user_space_name_uz)
 
                 await send_protected_message(message, "Enter User Space's Russian Name:")
@@ -134,6 +146,11 @@ async def add_userspace_name_ru(message: Message, state: FSMContext):
 
             try:
                 user_space_name_ru = message.text
+                if user_space_name_ru in BUTTONS_AND_COMMANDS:
+                    await send_protected_message(message, "Invalid!")
+                    await state.clear()
+                    return
+
                 await state.update_data(user_space_name_ru=user_space_name_ru)
 
                 await send_protected_message(message, "Enter User Space's English Name:")
@@ -162,6 +179,10 @@ async def add_userspace_name_en(message: Message, state: FSMContext):
 
             try:
                 user_space_name = message.text
+                if user_space_name in BUTTONS_AND_COMMANDS:
+                    await send_protected_message(message, "Invalid!")
+                    return
+
                 await state.update_data(user_space_name_en=user_space_name)
 
                 user_space_data = await state.get_data()
@@ -226,6 +247,10 @@ async def delete_userspace_go(message: Message, state: FSMContext):
 
             try:
                 user_space_code = message.text
+                if user_space_code in BUTTONS_AND_COMMANDS:
+                    await send_protected_message(message, "Invalid!")
+                    return
+
                 user_space_data = get_userspace_by_code_query(user_space_code)
                 if user_space_data is None:
                     await send_protected_message(message, f"Bu Codeli User Space Mavjud Emas!")
@@ -309,7 +334,7 @@ async def show_user_spaces(message: Message):
 
 
 @router_for_userspace.message(F.text == "Edit User Space")
-async def edit_userspace(message: Message):
+async def edit_userspace(message: Message, state: FSMContext):
     if is_user_registered(message.from_user.id):
         if await is_active(message):
             await activity_maker(message)
@@ -319,7 +344,280 @@ async def edit_userspace(message: Message):
                 await not_admin_message(message)
                 return
 
-            await send_protected_message(message, "Comming Soon🔥")
+            user_spaces_file_path = os.path.join(BASE_PATH, "all_userspace.txt")
+
+            user_spaces = get_all_user_spaces_query()
+            if len(user_spaces) == 0:
+                await send_protected_message(message, "There are no User Spaces!")
+                await userspace_menu(message)
+                return
+
+            try:
+                with open(user_spaces_file_path, "w") as f:
+                    for user_space in user_spaces:
+                        f.write(f"ID: {user_space['id']}\n"
+                                f"Name UZ: {user_space['name_uz']}\n"
+                                f"Name RU: {user_space['name_ru']}\n"
+                                f"Name EN: {user_space['name_en']}\n"
+                                f"Code: {user_space['code']}\n"
+                                f"User: {get_user_by_id_query(user_space['user_id'])['first_name']}\n"
+                                f"Created At: {user_space['created_at']}\n"
+                                f"Updated At: {user_space['updated_at']}\n"
+                                f"{'-' * 20}\n")
+
+                if os.path.exists(user_spaces_file_path):
+                    cat = FSInputFile(user_spaces_file_path)
+                    await send_protected_message(message, document=cat)
+                else:
+                    await send_protected_message(message, "The file does not exist.")
+
+            except Exception as e:
+                await send_protected_message(message, f"An error occurred: {e}")
+
+            if os.path.exists(user_spaces_file_path):
+                os.remove(user_spaces_file_path)
+
+            await send_protected_message(message, "Enter userspace ID:")
+            await state.set_state(EditUserSpaceState.user_space_id)
+
+        else:
+            await not_active_message(message)
+
+    else:
+        await not_registered_message(message)
+
+
+@router_for_userspace.message(EditUserSpaceState.user_space_id)
+async def edit_userspace_go(message: Message, state: FSMContext):
+    if is_user_registered(message.from_user.id):
+        if await is_active(message):
+            await activity_maker(message)
+
+            user_data = get_user_by_telegram_id_query(message.from_user.id)
+            if user_data['is_admin'] is False:
+                await not_admin_message(message)
+                await state.clear()
+                return
+
+            try:
+                user_space_id = message.text
+                if user_space_id in BUTTONS_AND_COMMANDS:
+                    await send_protected_message(message, "Invalid!")
+                    await state.clear()
+                    await userspace_menu(message)
+                    return
+
+                if not user_space_id.isnumeric():
+                    await send_protected_message(message, "ID must be numeric!")
+                    await state.clear()
+                    await userspace_menu(message)
+                    return
+
+                user_space_data = get_userspace_by_id_query(user_space_id)
+                if user_space_data is None:
+                    await send_protected_message(message, f"ID {user_space_id} User Space Mavjud Emas!")
+                    return
+
+                await send_protected_message(message, f"Enter new name uz:", reply_markup=skip_menu)
+                await state.update_data(user_space_id=user_space_id)
+                await state.set_state(EditUserSpaceState.user_space_new_name_uz)
+
+            except Exception as e:
+                print(str(e))
+                await state.clear()
+                await userspace_menu(message)
+
+        else:
+            await not_active_message(message)
+
+    else:
+        await not_registered_message(message)
+
+
+@router_for_userspace.message(EditUserSpaceState.user_space_new_name_uz)
+async def edit_userspace_new_name_uz(message: Message, state: FSMContext):
+    if is_user_registered(message.from_user.id):
+        if await is_active(message):
+            await activity_maker(message)
+
+            user_data = get_user_by_telegram_id_query(message.from_user.id)
+            if user_data['is_admin'] is False:
+                await not_admin_message(message)
+                await state.clear()
+                return
+
+            try:
+                new_name_uz = message.text
+                if new_name_uz == "Skip":
+                    new_name_uz = None
+
+                else:
+                    if new_name_uz in BUTTONS_AND_COMMANDS:
+                        await send_protected_message(message, "Invalid!")
+                        await state.clear()
+                        await userspace_menu(message)
+                        return
+
+                await send_protected_message(message, f"Enter new name ru:", reply_markup=skip_menu)
+                await state.update_data(user_space_new_name_uz=new_name_uz)
+                await state.set_state(EditUserSpaceState.user_space_new_name_ru)
+
+            except Exception as e:
+                print(str(e))
+                await state.clear()
+                await userspace_menu(message)
+
+        else:
+            await not_active_message(message)
+
+    else:
+        await not_registered_message(message)
+
+
+@router_for_userspace.message(EditUserSpaceState.user_space_new_name_ru)
+async def edit_userspace_new_name_ru(message: Message, state: FSMContext):
+    if is_user_registered(message.from_user.id):
+        if await is_active(message):
+            await activity_maker(message)
+
+            user_data = get_user_by_telegram_id_query(message.from_user.id)
+            if user_data['is_admin'] is False:
+                await not_admin_message(message)
+                await state.clear()
+                return
+
+            try:
+                new_name_ru = message.text
+                if new_name_ru == "Skip":
+                    new_name_ru = None
+
+                else:
+                    if new_name_ru in BUTTONS_AND_COMMANDS:
+                        await send_protected_message(message, "Invalid!")
+                        await state.clear()
+                        await userspace_menu(message)
+                        return
+
+                await send_protected_message(message, f"Enter new name en:", reply_markup=skip_menu)
+                await state.update_data(user_space_new_name_ru=new_name_ru)
+                await state.set_state(EditUserSpaceState.user_space_new_name_en)
+
+            except Exception as e:
+                print(str(e))
+                await state.clear()
+                await userspace_menu(message)
+
+        else:
+            await not_active_message(message)
+
+    else:
+        await not_registered_message(message)
+
+
+@router_for_userspace.message(EditUserSpaceState.user_space_new_name_en)
+async def edit_userspace_new_name_en(message: Message, state: FSMContext):
+    if is_user_registered(message.from_user.id):
+        if await is_active(message):
+            await activity_maker(message)
+
+            user_data = get_user_by_telegram_id_query(message.from_user.id)
+            if user_data['is_admin'] is False:
+                await not_admin_message(message)
+                await state.clear()
+                return
+
+            try:
+                new_name_en = message.text
+                if new_name_en == "Skip":
+                    new_name_en = None
+
+                else:
+                    if new_name_en in BUTTONS_AND_COMMANDS:
+                        await send_protected_message(message, "Invalid!")
+                        await state.clear()
+                        await userspace_menu(message)
+                        return
+
+                await send_protected_message(message, "Enter new code:", reply_markup=skip_menu)
+                await state.update_data(user_space_new_name_en=new_name_en)
+                await state.set_state(EditUserSpaceState.user_space_new_code)
+
+            except Exception as e:
+                print(str(e))
+                await state.clear()
+                await userspace_menu(message)
+
+        else:
+            await not_active_message(message)
+
+    else:
+        await not_registered_message(message)
+
+
+@router_for_userspace.message(EditUserSpaceState.user_space_new_code)
+async def edit_userspace_new_code(message: Message, state: FSMContext):
+    if is_user_registered(message.from_user.id):
+        if await is_active(message):
+            await activity_maker(message)
+
+            user_data = get_user_by_telegram_id_query(message.from_user.id)
+            if user_data['is_admin'] is False:
+                await not_admin_message(message)
+                await state.clear()
+                return
+
+            try:
+                new_code = message.text
+                if new_code == "Skip":
+                    new_code = None
+
+                else:
+                    if new_code in BUTTONS_AND_COMMANDS:
+                        await send_protected_message(message, "Invalid!")
+                        await state.clear()
+                        await userspace_menu(message)
+                        return
+
+                    user_space_data = get_userspace_by_code_query(new_code)
+                    if user_space_data:
+                        await send_protected_message(message, f"Bunday Kodli UserSpace Mavjud!")
+                        await state.clear()
+                        await userspace_menu(message)
+                        return
+
+                state_data = await state.get_data()
+                user_space_id = state_data.get("user_space_id")
+                user_space_new_name_uz = state_data.get("user_space_new_name_uz")
+                user_space_new_name_ru = state_data.get("user_space_new_name_ru")
+                user_space_new_name_en = state_data.get("user_space_new_name_en")
+
+                user_space_data = get_userspace_by_id_query(user_space_id)
+                if user_space_new_name_uz is None:
+                    user_space_new_name_uz = user_space_data.get("name_uz")
+
+                if user_space_new_name_ru is None:
+                    user_space_new_name_ru = user_space_data.get("name_ru")
+
+                if user_space_new_name_en is None:
+                    user_space_new_name_en = user_space_data.get("name_en")
+
+                if new_code is None:
+                    new_code = user_space_data.get("code")
+
+                update_userspace_query(userspace_id=user_space_id,
+                                       new_name_uz=user_space_new_name_uz,
+                                       new_name_ru=user_space_new_name_ru,
+                                       new_name_en=user_space_new_name_en,
+                                       code=new_code)
+
+                await send_protected_message(message, "User Space Muvaffaqiyatli O'zgartirildi!")
+                await state.clear()
+                await userspace_menu(message)
+
+            except Exception as e:
+                print(str(e))
+                await state.clear()
+                await userspace_menu(message)
 
         else:
             await not_active_message(message)

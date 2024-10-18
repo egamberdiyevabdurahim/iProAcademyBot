@@ -1,11 +1,13 @@
-from aiogram import Router, F
-from aiogram.types import Message
+from aiogram import Router, F, Bot
+from aiogram.types import Message, InputMediaPhoto, InputMedia, FSInputFile, InputFile
 
+from database_config.config import TOKEN
 from queries.for_users import get_user_by_telegram_id_query
 from utils.activity_maker import activity_maker
 from utils.proteceds import send_protected_message
 
 end_router = Router()
+bot = Bot(token=TOKEN)
 
 
 @end_router.message(F.text)

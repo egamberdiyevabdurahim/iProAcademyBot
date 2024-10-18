@@ -6,7 +6,8 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 
 from buttons.for_auth import share_number_uz, choose_language_uz, \
-    share_number_eng, share_number_rus
+    share_number_eng, share_number_rus, choose_language_ru, choose_language_en
+from buttons.for_user import profiles_menu_en, profiles_menu_ru
 from queries.for_balance import get_active_balance_by_user_id_query
 from queries.for_users import get_user_by_telegram_id_query, update_user_query
 from states.user_states import EditPhoneNumberState, EditLanguageState
@@ -79,9 +80,10 @@ async def new_phone_number(message: Message, state: FSMContext):
                     else:
                         await send_protected_message(message, "Invalid phone number!")
 
-                    await profile_go(message)
-                    return
-            else:
+                    await state.clear()
+                    return await profile_go(message)
+
+            elif message.text:
                 phone_number = message.text
                 if re.match(PATTERN, phone_number):
                     if phone_number[0] == '+':
@@ -103,8 +105,8 @@ async def new_phone_number(message: Message, state: FSMContext):
                     else:
                         await send_protected_message(message, "Invalid phone number!")
 
-                    await profile_go(message)
-                    return
+                    await state.clear()
+                    return await profile_go(message)
 
             # Update user data after valid input
             state_data = await state.get_data()
@@ -135,13 +137,12 @@ async def change_language(message: Message, state: FSMContext):
             user_data = get_user_by_telegram_id_query(message.from_user.id)
             language = user_data.get('language_code')
 
-            # Display the language change options based on the user's current language
             if language == 'uz':
-                await message.answer("Yangi Til tanlang...", reply_markup=choose_language_uz)
+                await send_protected_message(message, "Yangi Til tanlang...", reply_markup=choose_language_uz)
             elif language == 'ru':
-                await message.answer("Выберите новый язык...", reply_markup=choose_language_uz)
+                await send_protected_message(message, "Выберите новый язык...", reply_markup=choose_language_ru)
             else:
-                await send_protected_message(message, "Choose new language...", reply_markup=choose_language_uz)
+                await send_protected_message(message, "Choose new language...", reply_markup=choose_language_en)
 
             # Store necessary data in FSM
             await state.update_data(user_id=user_data['id'],
@@ -161,17 +162,18 @@ async def change_language(message: Message, state: FSMContext):
 @user_setting_router.callback_query(EditLanguageState.language_code)
 async def new_language(callback: CallbackQuery, state: FSMContext):
     if is_user_registered(callback.from_user.id):
-        if is_active(callback.message):
+        if await is_active(callback.message, user_id=callback.from_user.id):
             # Retrieve stored data from FSM
             data = await state.get_data()
+            await callback.answer()
 
             # Change the language based on callback data
             if callback.data == "uz":
-                await send_protected_message(callback.message, "Til O'zgartirildi: Uzbek")
+                await send_protected_message(callback.message, "Til O'zgartirildi: Uzbek", user_id=callback.from_user.id)
             elif callback.data == "ru":
-                await send_protected_message(callback.message, "Язык изменен: Русский")
+                await send_protected_message(callback.message, "Язык изменен: Русский", user_id=callback.from_user.id)
             else:
-                await send_protected_message(callback.message, "Language changed: English")
+                await send_protected_message(callback.message, "Language changed: English", user_id=callback.from_user.id)
 
             # Update the user's language in the database
             update_user_query(user_id=data['user_id'],
@@ -180,9 +182,6 @@ async def new_language(callback: CallbackQuery, state: FSMContext):
                               first_name=data['first_name'],
                               last_name=data['last_name'],
                               telegram_id=data['telegram_id'])
-
-            # Acknowledge the callback query to avoid timeouts
-            await callback.answer()
 
             # Clear the FSM state
             await state.clear()
@@ -206,24 +205,66 @@ async def show_my_data(message: Message):
 
             user_data = get_user_by_telegram_id_query(message.from_user.id)
             language = user_data.get('language_code')
+            is_go = True
+            is_end = False
+            if user_data['is_super'] is False:
+                user_balance = get_active_balance_by_user_id_query(user_id=user_data['id'])
+                left = (user_balance['ends_at'] - datetime.date(datetime.now())).days
 
-            if language == "uz":
-                await send_protected_message(message, f"Ism Familiya: {user_data['first_name']} {user_data['last_name']}"
-                                                      f"Telefon Raqam: {user_data['phone_number']}"
-                                                      f"Til: {user_data['language_code']}"
-                                                      f"Telegram ID: {user_data['telegram_id']}")
-
-            elif language == "ru":
-                await send_protected_message(message, f"Имя: {user_data['first_name']} {user_data['last_name']}"
-                                                      f"Номер телефона: {user_data['phone_number']}"
-                                                      f"Язык: {user_data['language_code']}"
-                                                      f"Telegram ID: {user_data['telegram_id']}")
+                if left == 0:
+                    is_end = True
 
             else:
-                await send_protected_message(message, f"Name: {user_data['first_name']} {user_data['last_name']}"
-                                                      f"Phone number: {user_data['phone_number']}"
-                                                      f"Language: {user_data['language_code']}"
-                                                      f"Telegram ID: {user_data['telegram_id']}")
+                is_go = False
+                left = ''
+
+            if language == "uz":
+                if is_go:
+                    if is_end:
+                        left = "Bugun So'ngi Kun!"
+
+                    else:
+                        left = f"{left}-kun Qoldi"
+
+                await send_protected_message(message, f"Hisob tafsilotlari\n"
+                                                      f"👤 Foydalanuvchi nomi: @{message.from_user.username}\n"
+                                                      f"🙋‍♂️ Ism: {user_data['first_name']} {user_data['last_name']}\n"
+                                                      f"📞 Telefon: +{user_data['phone_number']}\n"
+                                                      f"🆔 Telegram ID: {user_data['telegram_id']}\n"
+                                                      f"🇺🇿 Muloqot tili: O'zbek Tili\n"
+                                                      f"💰 Balans: {left}")
+
+            elif language == "ru":
+                if is_go:
+                    if is_end:
+                        left = "Сегодня последний день!"
+
+                    else:
+                        left = f"{left}-дней осталось"
+
+                await send_protected_message(message, f"Данные счета\n"
+                                                      f"👤 Имя пользователя: @{message.from_user.username}\n"
+                                                      f"🙋‍♂️ Имя: {user_data['first_name']} {user_data['last_name']}\n"
+                                                      f"📞 Телефон: +{user_data['phone_number']}\n"
+                                                      f"🆔 Телеграм ID: {user_data['telegram_id']}\n"
+                                                      f"🇷🇺 Язык общения: Русский\n"
+                                                      f"💰 Баланс: {left}")
+
+            else:
+                if is_go:
+                    if is_end:
+                        left = "Today is the last day!"
+
+                    else:
+                        left = f"{left}-days to end"
+
+                await send_protected_message(message, f"Account Details\n"
+                                                      f"👤 Username: @{message.from_user.username}\n"
+                                                      f"🙋‍♂️ Full Name: {user_data['first_name']} {user_data['last_name']}\n"
+                                                      f"📞 Phone: +{user_data['phone_number']}\n"
+                                                      f"🆔 Telegram iD: {user_data['telegram_id']}\n"
+                                                      f"🇺🇸 Language: English\n"
+                                                      f"💰 Balance: {left}")
 
             await profile_go(message)
 
@@ -242,6 +283,10 @@ async def balance_handler(message: Message):
 
             user_data = get_user_by_telegram_id_query(message.from_user.id)
             language = user_data.get('language_code')
+
+            if user_data['is_super'] is True:
+                await send_protected_message(message, "You Are Super Admin!")
+                return
 
             user_balance = get_active_balance_by_user_id_query(user_id=user_data['id'])
             if user_balance is None:
@@ -269,6 +314,8 @@ async def balance_handler(message: Message):
                     await send_protected_message(message, f"Сегодня осталось последний день!\n"
                                                       f"Начало действия: {user_balance['starts_at']}\n"
                                                       f"Конец действия: {user_balance['ends_at']}")
+
+                else:
                     await send_protected_message(message, f"{left.days} дней осталось\n"
                                                           f"Дата начала активности: {user_balance['starts_at']}\n"
                                                           f"Дата конца активности: {user_balance['ends_at']}")

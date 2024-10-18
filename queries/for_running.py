@@ -1,11 +1,11 @@
 import os
 
 from database_config.db_settings import execute_query
+
+from queries.for_users import create_users_table_query
+from queries.for_activity import create_activity_table_query
 from queries.for_balance import create_balance_table_query
 
-from queries.for_pending_users import create_pending_user_table_query
-from queries.for_users import create_users_table_query
-# from queries.for_used import create_used_table_query
 from queries.for_panic_array import create_panic_array_table_query
 from queries.for_panic import create_panic_table_query
 from queries.for_userspace import create_userspace_table_query
@@ -14,7 +14,13 @@ from queries.for_chipset import create_chipset_table_query
 from queries.for_i2c import create_i2c_table_query
 from queries.for_aop_panic import create_aop_panic_table_query
 from queries.for_alphabets import create_alphabets_table_query
-from queries.for_activity import create_activity_table_query
+
+from queries.for_model import create_model_table_query
+from queries.for_swap import create_swap_table_query
+from queries.for_swap_photo import create_swap_photo_table_query
+
+from queries.for_itunes import create_itunes_table_query
+
 
 def create_is_used_table_query() -> None:
     """
@@ -69,19 +75,29 @@ def before_run() -> None:
     """
     Creates all required tables before running the application.
     """
-    create_pending_user_table_query()
+    # User
     create_users_table_query()
-    # create_used_table_query()
+    create_activity_table_query()
+    create_balance_table_query()
+
+    # Apple
+    # Panic
     create_panic_array_table_query()
     create_panic_table_query()
     create_userspace_table_query()
-    create_i2c_category_table_query()
     create_chipset_table_query()
+    create_i2c_category_table_query()
     create_i2c_table_query()
     create_aop_panic_table_query()
     create_alphabets_table_query()
-    create_activity_table_query()
-    create_balance_table_query()
+
+    # Swap
+    create_model_table_query()
+    create_swap_table_query()
+    create_swap_photo_table_query()
+
+    # iTunes
+    create_itunes_table_query()
     return None
 
 
@@ -92,25 +108,5 @@ def if_not_used():
 
     if not is_used():
         before_run()
-
-        # Read and execute SQL for category insertion
-        # with open(os.path.join(path, 'inserter_for_languages.sql'), 'r') as insert_file:
-        #     for line in insert_file:
-        #         query = line.strip()
-        #         execute_query(query)
-        #
-        # # Read and execute SQL for region insertion
-        # with open(os.path.join(path, 'inserter_for_region.sql'), 'r') as insert_file:
-        #     for line in insert_file:
-        #         query = line.strip()
-        #         execute_query(query)
-        #
-        # # Read and execute SQL for city insertion
-        # with open(os.path.join(path, 'inserter_for_city.sql'), 'r') as insert_file:
-        #     for line in insert_file:
-        #         query = line.strip()
-        #         execute_query(query)
-
         update_is_used_query()
-
     return None
