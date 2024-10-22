@@ -19,15 +19,13 @@ router = Router()
 # Helper function to send language-specific main menu
 async def send_main_menu(message: Message, language_code: str):
     if language_code == 'uz':
-        await send_protected_message(message,
-                                     f"Assalomu Aleykum {message.from_user.first_name}\n"
+        await message.answer(text=f"Assalomu Aleykum {message.from_user.first_name}\n"
                                      f"iPro Acdemy-ga Xush Kelibsiz!", reply_markup=main_menu_first_uz)
     elif language_code == 'ru':
-        await send_protected_message(
-            message, f"Добро Пожаловать в iProAcademy {message.from_user.first_name}!",
+        await message.answer(text=f"Добро Пожаловать в iProAcademy {message.from_user.first_name}!",
             reply_markup=main_menu_first_ru)
     else:
-        await send_protected_message(message, f"Welcome to iPro Academy "
+        await message.answer(text=f"Welcome to iPro Academy "
                                               f"{message.from_user.first_name}!",
                                      reply_markup=main_menu_first_en)
 
@@ -65,15 +63,16 @@ async def register_number(message: Message, state: FSMContext):
 async def register_language(callback: CallbackQuery, state: FSMContext):
     try:
         last_name = callback.from_user.last_name if callback.from_user.last_name else ''
+        await callback.answer()
         await callback.message.delete()
 
         # Send the appropriate message and keyboard for the selected language
         if callback.data == 'uz':
-            await send_protected_message(callback.message, "Raqamingizni Kiriting...", reply_markup=share_number_uz)
+            await callback.message.answer(text="Raqamingizni Kiriting...", reply_markup=share_number_uz)
         elif callback.data == 'ru':
-            await send_protected_message(callback.message, "Введите свой номер...", reply_markup=share_number_rus)
+            await callback.message.answer(text="Введите свой номер...", reply_markup=share_number_rus)
         else:
-            await send_protected_message(callback.message, "Enter your number...", reply_markup=share_number_eng)
+            await callback.message.answer(text="Enter your number...", reply_markup=share_number_eng)
 
         # Update the FSM state with user data
         await state.update_data(language_code=callback.data,

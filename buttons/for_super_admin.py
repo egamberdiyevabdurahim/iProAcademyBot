@@ -30,8 +30,8 @@ user_management_menu_super = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton(text="Delete User")],
     [KeyboardButton(text="Edit User"), KeyboardButton(text="Show Users")],
     [KeyboardButton(text="Show User Log"), KeyboardButton(text="Show All Users Log")],
-    [KeyboardButton(text="Activate User"), KeyboardButton(text="Show Active Users")],
-    [KeyboardButton(text="Schedule Activate User")],
+    [KeyboardButton(text="Activate User"), KeyboardButton(text="InActivate User")],
+    [KeyboardButton(text="Schedule Activate User"), KeyboardButton(text="Show Active Users")],
     [KeyboardButton(text="🔙Back to User Menu"), KeyboardButton(text="🔝Main Menu")]],
     resize_keyboard=True,
     input_field_placeholder="Choose")

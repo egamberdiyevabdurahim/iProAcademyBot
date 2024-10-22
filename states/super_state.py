@@ -34,3 +34,11 @@ class ActivateUserState(StatesGroup):
 class ScheduleActivateUser(StatesGroup):
     user_id = State()
     duration = State()
+
+
+class InActivateUserState(StatesGroup):
+    user_id = State()
+
+
+class SendMessageState(StatesGroup):
+    send = State()

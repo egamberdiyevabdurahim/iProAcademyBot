@@ -13,6 +13,7 @@ from auth.auth_hendler import router
 from queries.for_running import if_not_used
 
 from main import main_router
+from user.super_admin.handlers_for_sending_message import message_sender_super_router
 
 from user.super_admin.handlers_for_user import router_for_user_super
 from user.super_admin.super_admin_handlers import super_router
@@ -89,6 +90,7 @@ async def main():
                        # SUPER ADMIN
                        super_router,
                        router_for_user_super,
+                       message_sender_super_router,
                        end_router,
                        )
     await dp.start_polling(bot)

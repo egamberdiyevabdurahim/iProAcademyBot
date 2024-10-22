@@ -8,15 +8,18 @@ from aiogram.types import Message, FSInputFile, CallbackQuery
 from buttons.for_super_admin import activate_user_menu
 from database_config.config import TOKEN
 from queries.for_activity import get_all_activities_query, get_activities_by_user_id_query
-from queries.for_balance import get_all_active_balance_query, insert_balance_query, get_active_balance_by_user_id_query
+from queries.for_balance import get_all_active_balance_query, insert_balance_query, get_active_balance_by_user_id_query, \
+    delete_balance_query, deactivate_balance_by_id_query
 from queries.for_users import get_user_by_telegram_id_query, get_all_admins_query, get_user_by_id_query, \
-    add_admin_by_id_query, delete_user_query, get_inactive_users_query, get_all_users_query
+    add_admin_by_id_query, delete_user_query, get_inactive_users_query, get_all_users_query, \
+    get_all_users_out_super_query
 from states.super_state import (AddAdminState, DeleteAdminState, ScheduleActivateUser, ActivateUserState,
-                                DeleteUserState, ShowActivityState)
+                                DeleteUserState, ShowActivityState, InActivateUserState)
 from user.super_admin.super_admin_handlers import user_management_go
 from utils.activity_maker import activity_maker
 from utils.addititons import BASE_PATH
 from utils.for_auth import is_user_registered
+from utils.important import disabled_balance_sender
 from utils.proteceds import send_protected_message
 from utils.validator import not_registered_message, not_super_admin_message, is_active, not_active_message, \
     not_admin_message
@@ -108,9 +111,17 @@ async def user_management_edit(message: Message):
         await not_registered_message(message)
 
 
-async def user_management_show_users2(message: Message):
+async def user_management_show_users2(message: Message, from_view=None):
     user_file_path = os.path.join(BASE_PATH, "users.txt")
-    users = get_all_users_query()
+    if from_view:
+        users = get_all_users_out_super_query()
+
+    else:
+        users = get_all_users_query()
+
+    if len(users) < 1:
+        await send_protected_message(message, "No users found.")
+        return
     with open(user_file_path, "w") as f:
         for user in users:
             last_name = user['last_name'] or ""
@@ -133,6 +144,8 @@ async def user_management_show_users2(message: Message):
     # Clean up the file after sending
     if os.path.exists(user_file_path):
         os.remove(user_file_path)
+
+    return True
 
 
 @router_for_user_super.message(F.text == "Show Users")
@@ -457,6 +470,9 @@ async def admin_management_delete_admin(message: Message, state: FSMContext):
 async def user_management_show_inactive_users(message: Message):
     user_file_path = os.path.join(BASE_PATH, "inactive_users.txt")
     users = get_inactive_users_query()
+    if len(users) < 1:
+        await send_protected_message(message, "InActive Users Not Found")
+        return
     with open(user_file_path, "w") as f:
         for user in users:
             last_name = user['last_name'] or None
@@ -480,6 +496,8 @@ async def user_management_show_inactive_users(message: Message):
     if os.path.exists(user_file_path):
         os.remove(user_file_path)
 
+    return True
+
 
 @router_for_user_super.message(F.text == "Activate User")
 async def user_management_activate_user(message: Message, state: FSMContext):
@@ -492,9 +510,9 @@ async def user_management_activate_user(message: Message, state: FSMContext):
                 await not_super_admin_message(message)
                 return
 
-            await user_management_show_inactive_users(message)
-            await send_protected_message(message, "Foydalanuvchi ID-sini kiriting: ")
-            await state.set_state(ActivateUserState.user_id)
+            if await user_management_show_inactive_users(message):
+                await send_protected_message(message, "Foydalanuvchi ID-sini kiriting: ")
+                await state.set_state(ActivateUserState.user_id)
 
         else:
             await not_active_message(message)
@@ -613,7 +631,7 @@ async def user_management_activate_user_duration(callback: CallbackQuery, state:
 
             await callback.message.delete_reply_markup()
             await send_protected_message(callback.message, f"{user_id} - id lik {user_data['first_name']}\n"
-                                                           f"{uz_name}-ga aktivatsiya qilindi✅")
+                                                           f"{uz_name}-ga aktivatsiya qilindi✅", user_id=callback.from_user.id)
             text_uz = f"{user_data['first_name']} - Sizni Balansingiz {uz_name}-ga To'dirildi🎉"
             text_ru = f"{user_data['first_name']} - Ваш баланс был увеличен на {ru_name}🎉"
             text_en = f"{user_data['first_name']} - Your balance has been increased for {eng_name}🎉"
@@ -704,9 +722,9 @@ async def user_management_schedule_activate_user(message: Message, state: FSMCon
                 await not_super_admin_message(message)
                 return
 
-            await user_management_show_users2(message)
-            await send_protected_message(message, "Foydalanuvchi Telegram ID-sini kiriting: ")
-            await state.set_state(ScheduleActivateUser.user_id)
+            if await user_management_show_users2(message, True):
+                await send_protected_message(message, "Foydalanuvchi Telegram ID-sini kiriting: ")
+                await state.set_state(ScheduleActivateUser.user_id)
 
         else:
             await not_active_message(message)
@@ -817,7 +835,7 @@ async def user_management_activate_user_duration(callback: CallbackQuery, state:
 
             await callback.message.delete_reply_markup()
             await send_protected_message(callback.message, f"{user_id} - id lik {user_data['first_name']}\n"
-                                                           f"{uz_name}-ga aktivatsiya qilindi✅")
+                                                           f"{uz_name}-ga aktivatsiya qilindi✅", user_id=callback.from_user.id)
             await state.clear()
             await user_management_go(callback.message, callback.from_user.id)
 
@@ -826,3 +844,91 @@ async def user_management_activate_user_duration(callback: CallbackQuery, state:
 
     else:
         await not_registered_message(callback.message)
+
+
+@router_for_user_super.message(F.text == "InActivate User")
+async def user_management_inactivate_user(message: Message, state: FSMContext):
+    if is_user_registered(message.from_user.id):
+        if await is_active(message):
+            await activity_maker(message)
+
+            user_data = get_user_by_telegram_id_query(message.from_user.id)
+            if user_data['is_super'] is False:
+                await not_super_admin_message(message)
+                return
+
+            user_file_path = os.path.join(BASE_PATH, "active_users.txt")
+
+            try:
+                active_balances = get_all_active_balance_query()
+                if len(active_balances) == 0:
+                    await send_protected_message(message, "No active users found!")
+                    return
+                with open(user_file_path, "w") as f:
+                    for balance in active_balances:
+                        days_left = balance['ends_at'] - datetime.date(datetime.now())
+                        user = get_user_by_id_query(user_id=balance['user_id'])
+                        f.write(f"ID: {balance['id']}\n"
+                                f"User: {user['first_name']}\n"
+                                f"Started At: {balance['starts_at']}\n"
+                                f"Ends At: {balance['ends_at']}\n"
+                                f"Days Left: {days_left}\n"
+                                f"{'-' * 20}\n")
+
+                if os.path.exists(user_file_path):
+                    cat = FSInputFile(user_file_path)
+                    await send_protected_message(message, document=cat)
+
+                else:
+                    await send_protected_message(message, "The file does not exist.")
+
+            except Exception as e:
+                await send_protected_message(message, f"An error occurred: {e}")
+
+            if os.path.exists(user_file_path):
+                os.remove(user_file_path)
+
+            await send_protected_message(message, "Foydalanuvchi ID-sini kiriting: ")
+            await state.set_state(InActivateUserState.user_id)
+
+        else:
+            await not_active_message(message)
+
+    else:
+        await not_registered_message(message)
+
+
+@router_for_user_super.message(InActivateUserState.user_id)
+async def user_management_inactivate_user_go(message: Message, state: FSMContext):
+    await activity_maker(message)
+
+    user_data = get_user_by_telegram_id_query(message.from_user.id)
+    if user_data['is_super'] is False:
+        await not_super_admin_message(message)
+        return
+
+    id_of = message.text
+    if id_of is None:
+        await send_protected_message(message, "Foydalanuvchi ID-si xato!")
+        await state.clear()
+        return
+
+    if not id_of.isnumeric():
+        await send_protected_message(message, "Foydalanuvchi ID-si xato!")
+        await state.clear()
+        return
+
+    user = get_user_by_id_query(id_of)
+    if user is None:
+        await send_protected_message(message, "Bunday ID-lik User Mavjud Emas!")
+        await state.clear()
+        return
+
+    active_balance = get_active_balance_by_user_id_query(user_id=user['id'])
+    deactivate_balance_by_id_query(active_balance['id'])
+    await disabled_balance_sender(user['id'])
+
+    await send_protected_message(message, f"{user['telegram_id']} - id lik {user_data['first_name']}\n"
+                                                   f"aktivatsiya o'chirildi✅")
+    await state.clear()
+    await user_management_go(message)

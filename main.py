@@ -1,5 +1,5 @@
 from aiogram import Router, F, Bot
-from aiogram.filters import CommandStart
+from aiogram.filters import CommandStart, Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
@@ -7,7 +7,6 @@ from auth.auth_hendler import send_main_menu
 from buttons.for_auth import choose_language_en, choose_language_uz, choose_language_ru
 from buttons.for_user import user_main_menu_en, user_main_menu_uz, user_main_menu_ru
 from database_config.config import TOKEN
-from queries.for_users import get_user_by_telegram_id_query
 from states.auth_state import RegisterState
 from utils.activity_maker import activity_maker
 from utils.for_auth import is_user_registered, get_user_data
@@ -24,17 +23,17 @@ async def start_command_uz(message: Message, state: FSMContext):
 
 
 async def start_command_en(message: Message, state: FSMContext):
-    await send_protected_message(message, content="Choose your language", reply_markup=choose_language_en)
+    await message.answer(text="Choose your language", reply_markup=choose_language_en)
     await state.set_state(RegisterState.language_code)
 
 
 async def start_command_ru(message: Message, state: FSMContext):
-    await send_protected_message(message, "Выберите свой язык", reply_markup=choose_language_ru)
+    await message.answer(text="Выберите свой язык", reply_markup=choose_language_ru)
     await state.set_state(RegisterState.language_code)
 
 
 async def start_command_2_en(message: Message, user_data):
-    await send_protected_message(message, f"Welcome to iPro Academy {user_data['first_name']}!")
+    await message.answer(text=f"Welcome to iPro Academy {user_data['first_name']}!")
     await send_protected_message(message, "Main Menu:", reply_markup=user_main_menu_en)
 
 
@@ -141,3 +140,8 @@ async def start_command(message: Message, state: FSMContext):
 
         else:
             await start_command_en(message, state)
+
+
+@main_router.message(Command('help'))
+async def help_command(message: Message):
+    await message.answer("Bu yerda /help xabar bo'lishi kerak")

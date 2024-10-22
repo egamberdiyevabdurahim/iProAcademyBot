@@ -65,7 +65,7 @@ async def user_management_go(message: Message, user_id: int=None):
                 return
 
             if user_data['is_super'] is True:
-                await send_protected_message(message, "Admin Management", reply_markup=user_management_menu_super)
+                await send_protected_message(message, "Admin Management", reply_markup=user_management_menu_super, user_id=user_id)
             else:
                 await not_super_admin_message(message)
 

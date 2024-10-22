@@ -32,13 +32,13 @@ async def edit_phone_number(message: Message, state: FSMContext):
             language = user_data.get('language')
 
             if language == "uz":
-                await send_protected_message(message, f"Hozirgi Raqam: {user_data['phone_number']}")
+                await send_protected_message(message, f"Hozirgi Raqam: +{user_data['phone_number']}")
                 await send_protected_message(message, "Yangi Telefon Raqamini Kiriting...", reply_markup=share_number_uz)
             elif language == "ru":
-                await send_protected_message(message, f"Текущий номер: {user_data['phone_number']}")
+                await send_protected_message(message, f"Текущий номер: +{user_data['phone_number']}")
                 await send_protected_message(message, "Введите новый номер телефона...", reply_markup=share_number_rus)
             else:
-                await send_protected_message(message, f"Your current phone number: {user_data['phone_number']}")
+                await send_protected_message(message, f"Your current phone number: +{user_data['phone_number']}")
                 await send_protected_message(message, "Enter new phone number...", reply_markup=share_number_eng)
 
             await state.set_state(EditPhoneNumberState.new_phone_number)

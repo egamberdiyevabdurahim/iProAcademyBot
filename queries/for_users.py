@@ -99,11 +99,26 @@ def get_all_users_query() -> list:
     return execute_query(query, (True,), fetch="all")
 
 
+def get_all_active_users_query() -> list:
+    query = """
+        SELECT * FROM users u
+        LEFT JOIN balance b ON u.id = b.user_id
+        WHERE u.status = %s AND (b.is_active = %s OR b IS NULL)
+        ORDER BY u.id DESC
+        """
+    return execute_query(query, (True, True), fetch="all")
+
+
+def get_all_users_out_super_query() -> list:
+    query = "SELECT * FROM users WHERE is_super = %s AND status = %s"
+    return execute_query(query, (False, True), fetch="all")
+
+
 def get_inactive_users_query() -> list:
     query = """
     SELECT * FROM users u
     LEFT JOIN balance b ON u.id = b.user_id
-    WHERE u.status = %s AND (b.is_active = %s OR b IS NULL)
+    WHERE u.status = %s AND (b.is_active = %s OR b IS NULL) AND is_super is False
     ORDER BY u.id DESC
     """
     return execute_query(query, (True, False), fetch="all")

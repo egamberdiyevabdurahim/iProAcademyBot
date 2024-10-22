@@ -7,7 +7,7 @@ from database_config.config import TOKEN
 from queries.for_activity import get_last_activity_by_user_id_query, get_yesterdays_first_activity_by_user_id_query
 from queries.for_balance import get_all_active_balance_query, deactivate_balance_by_id_query, \
     get_all_future_active_balance_query, activate_balance_by_id_query
-from queries.for_users import get_user_by_id_query, get_all_users_query
+from queries.for_users import get_user_by_id_query, get_all_users_query, get_all_active_users_query
 from utils.addititons import ADMIN_LINK
 
 bot = Bot(token=TOKEN)
@@ -18,19 +18,23 @@ async def disabled_balance_sender(user_id):
     if user_data:
         language = user_data['language_code']
         text = None
+        markup = None
         if language == 'uz':
             text = (f"{user_data['first_name']} {user_data['last_name']}\nSizning Hisobingiz o'chirildi\n"
                     f"{ADMIN_LINK} bilan bog'lanib hisobingizni yoqtiring!")
+            markup = main_menu_first_uz
 
         elif language == 'ru':
             text = (f"{user_data['first_name']} {user_data['last_name']}\nВаш аккаунт был отключен\n"
                     f"Свяжитесь с {ADMIN_LINK}, чтобы активировать ваш аккаунт!")
+            markup = main_menu_first_ru
 
         elif language == 'en':
             text = (f"{user_data['first_name']} {user_data['last_name']}\nYour account has been disabled\n"
                     f"Contact {ADMIN_LINK} to activate your account!")
+            markup = main_menu_first_en
 
-        await bot.send_message(chat_id=user_data['telegram_id'], text=text, protect_content=True)
+        await bot.send_message(chat_id=user_data['telegram_id'], text=text, protect_content=True, reply_markup=markup)
 
 
 async def balance_calculater():
@@ -160,7 +164,7 @@ async def balance_activator():
 
 
 async def message_deleter():
-    users_data = get_all_users_query()
+    users_data = get_all_active_users_query()
     for user_data in users_data:
         user_id = user_data['id']
         language_code = user_data['language_code']
@@ -182,8 +186,8 @@ async def message_deleter():
             try:
                 await bot.delete_message(chat_id=telegram_id, message_id=message_id)
 
-            except Exception as e:
-                print(e)
+            except Exception:
+                pass
 
         # Send a welcome message based on language
         try:
@@ -204,6 +208,6 @@ async def message_deleter():
                                        reply_markup=main_menu_first_en,
                                        protect_content=True)
 
-        except Exception as e:
-            print(e)
+        except Exception:
+            pass
 

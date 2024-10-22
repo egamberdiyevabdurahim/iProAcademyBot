@@ -6,6 +6,7 @@ from queries.for_users import get_user_by_telegram_id_query
 async def send_protected_message(message: Message, content: str = None,
                                  photo: str = None, document = None,
                                  reply_markup=None, user_id=None):
+
     user_id = user_id if user_id else message.from_user.id
     protect = True
     is_super = get_user_by_telegram_id_query(user_id)

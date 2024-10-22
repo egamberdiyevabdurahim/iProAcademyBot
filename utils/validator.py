@@ -9,30 +9,31 @@ from utils.addititons import ADMIN_LINK
 from utils.proteceds import send_protected_message
 
 
-async def not_registered_message_uz(message: Message):
+async def not_registered_message_uz(message: Message, user_id):
     await send_protected_message(message,
         f"{message.from_user.first_name} - siz Academiya uquvchisi emassiz botdan foydalanish uchun\n{ADMIN_LINK} "
-        f"ga murojat qiling!")
+        f"ga murojat qiling!", user_id=user_id)
 
 
-async def not_registered_message_ru(message: Message):
+async def not_registered_message_ru(message: Message, user_id):
     await send_protected_message(message,
         f"{message.from_user.first_name} - вы не являетесь студентом Академии iPro, пожалуйста, "
-        f"свяжитесь с {ADMIN_LINK} для использования бота!")
+        f"свяжитесь с {ADMIN_LINK} для использования бота!", user_id=user_id)
 
 
-async def not_registered_message_en(message: Message):
+async def not_registered_message_en(message: Message, user_id):
     await send_protected_message(message,
-        f"{message.from_user.first_name} - You are not an Academy student, please contact {ADMIN_LINK} to use the bot!")
+        f"{message.from_user.first_name} - You are not an Academy student, please contact {ADMIN_LINK} to use the bot!", user_id=user_id)
 
 
-async def not_registered_message(message: Message):
+async def not_registered_message(message: Message, user_id):
+    user_id = user_id if user_id else message.from_user.id
     if message.from_user.language_code == 'uz':
-        await not_registered_message_uz(message)
+        await not_registered_message_uz(message, user_id)
     elif message.from_user.language_code == 'ru':
-        await not_registered_message_ru(message)
+        await not_registered_message_ru(message, user_id)
     else:
-        await not_registered_message_en(message)
+        await not_registered_message_en(message, user_id)
 
 
 async def not_admin_message_ru(message: Message):
