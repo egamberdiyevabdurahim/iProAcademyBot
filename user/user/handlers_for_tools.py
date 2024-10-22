@@ -3,12 +3,15 @@ from time import sleep
 import requests
 
 from aiogram import Router, F
+from aiogram.enums import ChatAction
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 
 from buttons.for_user import manual_imei_generator_menu_uz, manual_imei_generator_menu_ru, \
     manual_imei_generator_menu_en
 from database_config.config import FIRST_API_KEY, FIRST_API_URL
+from queries.for_imei import insert_imei_866_query, insert_imei_860_query, insert_imei_355_query, insert_imei_358_query, \
+    get_imei_866_by_imei_query, get_imei_860_by_imei_query, get_imei_355_by_imei_query, get_imei_358_by_imei_query
 from queries.for_users import get_user_by_telegram_id_query
 from states.user_states import ImeiCheckerState, ImeiGeneratorState
 from user.user.user_handlers import imei_generator_go
@@ -81,6 +84,20 @@ async def imei_checker_input(message: Message, state: FSMContext):
         await send_protected_message(message, content='Imei 15 ta raqamli bo`lishmadingiz!')
 
 
+async def imei_is_available(imei):
+    if imei[:3] == '866':
+        return get_imei_866_by_imei_query(imei) is not None
+
+    elif imei[:3] == '860':
+        return get_imei_860_by_imei_query(imei) is not None
+
+    elif imei[:3] == '355':
+        return get_imei_355_by_imei_query(imei) is not None
+
+    elif imei[:3] == '358':
+        return get_imei_358_by_imei_query(imei) is not None
+
+
 async def get_imei_from_my_imei(imei):
     for i in IMEI:
         if i.startswith(imei):
@@ -123,27 +140,43 @@ async def random_prefix(pre):
     return random.choice(pre)
 
 
-async def generate_imei(prefix):
+async def generate_imei(prefix, user_id):
     pre = prefix.split('\n')
     imei = await random_prefix(pre)
     suffix = await generate_imei_suffix()
     gen = imei + suffix + str(await luhn(imei + suffix))
+
+    if await imei_is_available(gen):
+        return await generate_imei(prefix, user_id)
+
+    if gen[:3] == '866':
+        insert_imei_866_query(imei=gen, user_id=user_id)
+
+    elif gen[:3] == '860':
+        insert_imei_860_query(imei=gen, user_id=user_id)
+
+    elif gen[:3] == '355':
+        insert_imei_355_query(imei=gen, user_id=user_id)
+
+    elif gen[:3] == '358':
+        insert_imei_358_query(imei=gen, user_id=user_id)
+
     return gen
 
 
-async def generate_all(imei_count, prefix):
+async def generate_all(imei_count, prefix, user_id):
     imei_list = dict()
 
     counter = 0
     for _ in range(imei_count):
         counter += 1
         imei_for_generate = await get_imei_from_my_imei(prefix)
-        imei_list[str(counter)] = [str(await generate_imei(imei_for_generate))]
+        imei_list[str(counter)] = [str(await generate_imei(imei_for_generate, user_id))]
 
     counter = 0
     for _ in range(imei_count):
         counter += 1
-        imei_list[str(counter)].append(await generate_second_imei(imei_list[str(counter)][0]))
+        imei_list[str(counter)].append(await generate_second_imei(imei_list[str(counter)][0], user_id))
 
     return imei_list
 
@@ -175,7 +208,7 @@ async def luhn_second(imei):
 
 
 # Function to generate the second IMEI based on the first one
-async def generate_second_imei(first):
+async def generate_second_imei(first, user_id):
     # Extract the first 8 digits of the original IMEI (TAC code)
     tac = first[:8]
 
@@ -188,9 +221,25 @@ async def generate_second_imei(first):
 
     # Calculate the new Luhn check digit
     check_digit = await luhn_second(new_imei)
+    imei = str(new_imei + str(check_digit))
+
+    if await imei_is_available(imei):
+        return await generate_second_imei(first, user_id)
+
+    if imei[:3] == '866':
+        insert_imei_866_query(imei=imei, user_id=user_id)
+
+    elif imei[:3] == '860':
+        insert_imei_860_query(imei=imei, user_id=user_id)
+
+    elif imei[:3] == '355':
+        insert_imei_355_query(imei=imei, user_id=user_id)
+
+    elif imei[:3] == '358':
+        insert_imei_358_query(imei=imei, user_id=user_id)
 
     # Return the complete second IMEI
-    return str(new_imei + str(check_digit))
+    return imei
 
 
 @user_tools_router.message(F.text.in_({"866XXX", "860XXX", "355XXX", "358XXX"}))
@@ -198,10 +247,11 @@ async def imei_generator_go2(message: Message):
     if is_user_registered(message.from_user.id):
         if await is_active(message):
             await activity_maker(message)
+            user_id = get_user_by_telegram_id_query(message.from_user.id)['id']
             imei = message.text[:3]
             imei_for_generate = await get_imei_from_my_imei(imei)
-            first_imei = await generate_imei(imei_for_generate)
-            second_imei = await generate_second_imei(first_imei)
+            first_imei = await generate_imei(imei_for_generate, user_id)
+            second_imei = await generate_second_imei(first_imei, user_id)
             await message.answer(text=f"1) {first_imei}\n"
                                       f"2) {second_imei}")
 
@@ -295,10 +345,12 @@ async def imei_count_go(message: Message, state: FSMContext):
                 await imei_generator_go(message)
                 return
 
+            await message.chat.do(action=ChatAction.TYPING)
+
             state_data = await state.get_data()
             prefix = state_data.get('prefix')
 
-            imei_list = await generate_all(int(count), prefix)
+            imei_list = await generate_all(int(count), prefix, get_user_by_telegram_id_query(message.from_user.id)['id'])
 
             full_data = ""
             counter = 0

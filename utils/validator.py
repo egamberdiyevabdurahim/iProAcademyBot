@@ -26,7 +26,7 @@ async def not_registered_message_en(message: Message, user_id):
         f"{message.from_user.first_name} - You are not an Academy student, please contact {ADMIN_LINK} to use the bot!", user_id=user_id)
 
 
-async def not_registered_message(message: Message, user_id):
+async def not_registered_message(message: Message, user_id=None):
     user_id = user_id if user_id else message.from_user.id
     if message.from_user.language_code == 'uz':
         await not_registered_message_uz(message, user_id)

@@ -1,6 +1,8 @@
 import os
 
 from database_config.db_settings import execute_query
+from queries.for_imei import create_imei_866_table_query, create_imei_860_table_query, create_imei_355_table_query, \
+    create_imei_358_table_query
 
 from queries.for_users import create_users_table_query
 from queries.for_activity import create_activity_table_query
@@ -98,6 +100,14 @@ def before_run() -> None:
 
     # iTunes
     create_itunes_table_query()
+
+    # Tools
+    # IMEI
+    create_imei_866_table_query()
+    create_imei_860_table_query()
+    create_imei_355_table_query()
+    create_imei_358_table_query()
+
     return None
 
 
