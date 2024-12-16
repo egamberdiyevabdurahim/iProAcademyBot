@@ -22,6 +22,7 @@ class AddPanicState(StatesGroup):
     panic_name_ru = State()
     panic_name_en = State()
     panic_code = State()
+    panic_photo = State()
 
 
 class DeletePanicState(StatesGroup):
@@ -35,6 +36,7 @@ class EditPanicState(StatesGroup):
     panic_new_name_en = State()
     panic_array_id = State()
     panic_new_code = State()
+    panic_new_photo = State()
 
 
 # USERSPACE
@@ -43,6 +45,7 @@ class AddUserSpaceState(StatesGroup):
     user_space_name_ru = State()
     user_space_name_en = State()
     user_space_code = State()
+    user_space_photo = State()
 
 
 class DeleteUserSpaceState(StatesGroup):
@@ -55,6 +58,7 @@ class EditUserSpaceState(StatesGroup):
     user_space_new_name_ru = State()
     user_space_new_name_en = State()
     user_space_new_code = State()
+    user_space_new_photo = State()
 
 
 # CHIPSET
@@ -92,6 +96,7 @@ class AddI2CState(StatesGroup):
     i2c_name_en = State()
     chipset_id = State()
     category_id = State()
+    i2c_photo = State()
 
 
 class DeleteI2CState(StatesGroup):
@@ -105,6 +110,7 @@ class EditI2CState(StatesGroup):
     i2c_new_name_en = State()
     chipset_id = State()
     category_id = State()
+    i2c_new_photo = State()
 
 
 # AOP PANIC
@@ -113,6 +119,7 @@ class AddAopPanicState(StatesGroup):
     aop_panic_name_ru = State()
     aop_panic_name_en = State()
     aop_panic_code = State()
+    aop_panic_photo = State()
 
 
 class DeleteAopPanicState(StatesGroup):
@@ -125,6 +132,7 @@ class EditAopPanicState(StatesGroup):
     panic_name_ru = State()
     panic_name_en = State()
     panic_code = State()
+    panic_photo = State()
 
 
 # ALPHABET
@@ -133,6 +141,7 @@ class AddAlphabetState(StatesGroup):
     alphabet_name_ru = State()
     alphabet_name_en = State()
     alphabet_code = State()
+    alphabet_photo = State()
 
 
 class DeleteAlphabetState(StatesGroup):
@@ -145,6 +154,7 @@ class EditAlphabetState(StatesGroup):
     alphabet_new_name_ru = State()
     alphabet_new_name_en = State()
     alphabet_new_code = State()
+    alphabet_new_photo = State()
 
 
 # MODEL
@@ -193,6 +203,7 @@ class AddITunesState(StatesGroup):
     itunes_name_uz = State()
     itunes_name_ru = State()
     itunes_name_en = State()
+    itunes_photo = State()
 
 
 class DeleteITunesState(StatesGroup):
@@ -205,3 +216,4 @@ class EditITunesState(StatesGroup):
     itunes_new_name_uz = State()
     itunes_new_name_ru = State()
     itunes_new_name_en = State()
+    itunes_new_photo = State()

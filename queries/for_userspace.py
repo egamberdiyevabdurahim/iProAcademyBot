@@ -15,6 +15,7 @@ def create_userspace_table_query() -> None:
     name_uz TEXT NOT NULL,
     name_ru TEXT NOT NULL,
     name_en TEXT NOT NULL,
+    photo TEXT,
     code VARCHAR(64) NOT NULL,
     user_id BIGINT REFERENCES users(id),
     status BOOLEAN DEFAULT TRUE,
@@ -24,27 +25,28 @@ def create_userspace_table_query() -> None:
     return None
 
 
-def insert_userspace_query(name_uz: str, name_ru: str, name_en: str, code: str, user_id: int) -> None:
+def insert_userspace_query(name_uz: str, name_ru: str, name_en: str, code: str, user_id: int, photo=None) -> None:
     """
     Inserts a new user space into the userspace table.
     """
     query = """
-    INSERT INTO userspace (name_uz, name_ru, name_en, code, user_id)
-    VALUES (%s, %s, %s, %s, %s)
+    INSERT INTO userspace (name_uz, name_ru, name_en, code, user_id, photo)
+    VALUES (%s, %s, %s, %s, %s, %s)
     """
-    execute_query(query, (name_uz, name_ru, name_en, code, user_id))
+    execute_query(query, (name_uz, name_ru, name_en, code, user_id, photo))
     return None
 
 
-def update_userspace_query(userspace_id: int, new_name_uz: str, new_name_ru: str, new_name_en: str, code: str) -> None:
+def update_userspace_query(userspace_id: int, new_name_uz: str, new_name_ru: str,
+                           new_name_en: str, code: str, new_photo=None) -> None:
     """
     Updates a user space.
     """
     query = ("""
     UPDATE userspace
-    SET name_uz=%s, name_ru=%s, name_en=%s, code=%s, updated_at=%s
+    SET name_uz=%s, name_ru=%s, name_en=%s, code=%s, updated_at=%s, photo=%s
     WHERE id=%s AND status=%s""")
-    execute_query(query, (new_name_uz, new_name_ru, new_name_en, code, datetime.now(), userspace_id, True))
+    execute_query(query, (new_name_uz, new_name_ru, new_name_en, code, datetime.now(), new_photo, userspace_id, True))
     return None
 
 

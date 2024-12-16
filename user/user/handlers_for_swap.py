@@ -101,13 +101,10 @@ async def swap_data_sender(message: Message, language, data):
     for photo in photos:
         photos_data.append(InputMediaPhoto(media=photo['photo_id']))
 
-    # Send the media group
-    await message.answer_media_group(photos_data, protect_content=True)
-
     # Send the appropriate language message
     if language == "uz":
-        await send_protected_message(message, content=data['name_uz'])
+        await send_protected_message(message, content=data['name_uz'], media_group=photos_data)
     elif language == "ru":
-        await send_protected_message(message, content=data['name_ru'])
+        await send_protected_message(message, content=data['name_ru'], media_group=photos_data)
     elif language == "en":
-        await send_protected_message(message, content=data['name_en'])
+        await send_protected_message(message, content=data['name_en'], media_group=photos_data)

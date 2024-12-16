@@ -15,6 +15,7 @@ def create_panic_table_query() -> None:
     name_uz TEXT NOT NULL,
     name_ru TEXT NOT NULL,
     name_en TEXT NOT NULL,
+    photo TEXT,
     code VARCHAR(64) NOT NULL,
     array_id BIGINT REFERENCES panic_array(id),
     user_id BIGINT REFERENCES users(id),
@@ -25,27 +26,30 @@ def create_panic_table_query() -> None:
     return None
 
 
-def insert_panic_query(name_uz: str, name_ru: str, name_en: str, code: str, array_id: int, user_id: int) -> None:
+def insert_panic_query(name_uz: str, name_ru: str, name_en: str, code: str,
+                       array_id: int, user_id: int, photo=None) -> None:
     """
     Inserts a new panic notification into the panic table.
     """
     query = """
-    INSERT INTO panic (name_uz, name_ru, name_en, code, array_id, user_id)
-    VALUES (%s, %s, %s, %s, %s, %s)
+    INSERT INTO panic (name_uz, name_ru, name_en, code, array_id, user_id, photo)
+    VALUES (%s, %s, %s, %s, %s, %s, %s)
     """
-    execute_query(query, (name_uz, name_ru, name_en, code, array_id, user_id))
+    execute_query(query, (name_uz, name_ru, name_en, code, array_id, user_id, photo))
     return None
 
 
-def update_panic_query(panic_id: int, new_name_uz: str, new_name_ru: str, new_name_en: str, code: str, array_id: int) -> None:
+def update_panic_query(panic_id: int, new_name_uz: str, new_name_ru: str, new_name_en: str,
+                       code: str, array_id: int, new_photo=None) -> None:
     """
     Updates a panic notification.
     """
     query = ("""
     UPDATE panic
-    SET name_uz=%s, name_ru=%s, name_en=%s, code=%s, array_id=%s, updated_at=%s
+    SET name_uz=%s, name_ru=%s, name_en=%s, code=%s, array_id=%s, updated_at=%s, photo=%s
     WHERE id=%s AND status=%s""")
-    execute_query(query, (new_name_uz, new_name_ru, new_name_en, code, array_id, datetime.now(), panic_id, True))
+    execute_query(query, (new_name_uz, new_name_ru, new_name_en, code, array_id, datetime.now(),
+                          new_photo, panic_id, True))
     return None
 
 

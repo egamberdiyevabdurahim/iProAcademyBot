@@ -222,19 +222,50 @@ async def add_panic_array_id(message: Message, state: FSMContext):
                 await not_admin_message(message)
                 return
 
+            panic_array_id = message.text
+            if panic_array_id in BUTTONS_AND_COMMANDS:
+                await send_protected_message(message, "Invalid!")
+                return
+
+            panic_array_data = get_panic_array_by_id_query(int(panic_array_id))
+            if panic_array_data is None:
+                await send_protected_message(message, "Bu IDli Panic Array Mavjud Emas!")
+                await panic_management_go(message)
+                return
+
+            await state.update_data(panic_array_id=panic_array_id)
+            await send_protected_message(message, "Send Panic's photo:", reply_markup=skip_menu)
+            await state.set_state(AddPanicState.panic_photo)
+
+        else:
+            await not_active_message(message)
+
+    else:
+        await not_registered_message(message)
+
+
+@router_for_panic.message(AddPanicState.panic_photo)
+async def add_panic_photo(message: Message, state: FSMContext):
+    if is_user_registered(message.from_user.id):
+        if await is_active(message):
+            await activity_maker(message)
+
+            user_data = get_user_by_telegram_id_query(message.from_user.id)
+            if user_data['is_admin'] is False:
+                await not_admin_message(message)
+                return
+
             try:
-                panic_array_id = message.text
-                if panic_array_id in BUTTONS_AND_COMMANDS:
+                photo = None
+                if message.text == 'Skip':
+                    pass
+
+                elif message.photo:
+                    photo = message.photo[-1].file_id
+
+                else:
                     await send_protected_message(message, "Invalid!")
                     return
-
-                panic_array_data = get_panic_array_by_id_query(int(panic_array_id))
-                if panic_array_data is None:
-                    await send_protected_message(message, "Bu IDli Panic Array Mavjud Emas!")
-                    await panic_management_go(message)
-                    return
-
-                await state.update_data(panic_array_id=panic_array_id)
 
                 state_data = await state.get_data()
                 panic_name_uz = state_data['panic_name_uz']
@@ -249,7 +280,8 @@ async def add_panic_array_id(message: Message, state: FSMContext):
                                    name_ru=panic_name_ru,
                                    name_en=panic_name_en,
                                    code=panic_code,
-                                   user_id=user_data['id'])
+                                   user_id=user_data['id'],
+                                   photo=photo)
                 await send_protected_message(message, f"Panic {panic_name_uz} created successfully!")
 
             except Exception as e:
@@ -363,6 +395,7 @@ async def show_panics(message: Message):
                                 f"Name UZ: {panic['name_uz']}\n"
                                 f"Name RU: {panic['name_ru']}\n"
                                 f"Name EN: {panic['name_en']}\n"
+                                f"Image: {panic['photo']}\n"
                                 f"Code: {panic['code']}\n"
                                 f"Array: {get_panic_array_by_id_query(panic['array_id'])['name']}\n"
                                 f"User: {get_user_by_id_query(panic['user_id'])['first_name']}\n"
@@ -719,23 +752,56 @@ async def edit_panic_new_code(message: Message, state: FSMContext):
                 await state.clear()
                 return
 
+            new_code = message.text
+            if new_code == "Skip":
+                new_code = None
+
+            else:
+                if len(new_code) == 0:
+                    await send_protected_message(message, "Code bo'sh bo'lish olmaslig'i lovim etdingiz!")
+                    await state.clear()
+                    await panic_management_go(message)
+                    return
+
+                if new_code in BUTTONS_AND_COMMANDS:
+                    await send_protected_message(message, "Invalid!")
+                    await state.clear()
+                    await panic_management_go(message)
+                    return
+
+            await state.update_data(panic_new_code=new_code)
+            await send_protected_message(message, "Send new photo", reply_markup=skip_menu)
+            await state.set_state(EditPanicState.panic_new_photo)
+
+        else:
+            await not_active_message(message)
+
+    else:
+        await not_registered_message(message)
+
+
+@router_for_panic.message(EditPanicState.panic_new_photo)
+async def edit_panic_new_photo(message: Message, state: FSMContext):
+    if is_user_registered(message.from_user.id):
+        if await is_active(message):
+            await activity_maker(message)
+
+            user_data = get_user_by_telegram_id_query(message.from_user.id)
+            if user_data['is_admin'] is False:
+                await not_admin_message(message)
+                return
+
             try:
-                new_code = message.text
-                if new_code == "Skip":
-                    new_code = None
+                photo = None
+                if message.text == 'Skip':
+                    pass
+
+                elif message.photo:
+                    photo = message.photo[-1].file_id
 
                 else:
-                    if len(new_code) == 0:
-                        await send_protected_message(message, "Code bo'sh bo'lish olmaslig'i lovim etdingiz!")
-                        await state.clear()
-                        await panic_management_go(message)
-                        return
-
-                    if new_code in BUTTONS_AND_COMMANDS:
-                        await send_protected_message(message, "Invalid!")
-                        await state.clear()
-                        await panic_management_go(message)
-                        return
+                    await send_protected_message(message, "Invalid!")
+                    return
 
                 state_data = await state.get_data()
                 panic_id = state_data.get("panic_id")
@@ -743,6 +809,7 @@ async def edit_panic_new_code(message: Message, state: FSMContext):
                 new_name_ru = state_data.get("panic_new_name_ru")
                 new_name_en = state_data.get("panic_new_name_en")
                 panic_array_id = state_data.get("panic_array_id")
+                new_code = state_data.get("panic_new_code")
 
                 panic_data = get_panic_by_id_query(panic_id)
 
@@ -758,20 +825,32 @@ async def edit_panic_new_code(message: Message, state: FSMContext):
                 if panic_array_id is None:
                     panic_array_id = panic_data['array_id']
 
+                if new_code is None:
+                    new_code = panic_data['code']
+
+                if photo is None:
+                    photo = panic_data['photo']
+
                 update_panic_query(panic_id=panic_id,
                                    new_name_uz=new_name_uz,
                                    new_name_ru=new_name_ru,
                                    new_name_en=new_name_en,
                                    array_id=panic_array_id,
-                                   code=new_code)
+                                   code=new_code,
+                                   new_photo=photo)
 
                 await send_protected_message(message, "Panic array updated successfully!")
-                await state.clear()
-                await panic_management_go(message)
+                await send_protected_message(message, f"Code: {new_code}\n"
+                                                      f"Name UZ: {new_name_uz}\n"
+                                                      f"Name RU: {new_name_ru}\n"
+                                                      f"Name EN: {new_name_en}\n"
+                                                      f"Array ID: {panic_array_id}", photo=photo)
 
             except Exception as e:
                 print(str(e))
                 await send_protected_message(message, "Xatolik yuz berdi!")
+
+            finally:
                 await state.clear()
                 await panic_management_go(message)
 

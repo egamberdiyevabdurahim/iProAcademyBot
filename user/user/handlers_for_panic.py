@@ -74,13 +74,13 @@ async def panic_sender(message: Message, state: FSMContext):
             if message.text in panic_datas:
                 panic_data = get_panic_by_code_query(message.text)
                 if user_language['language_code'] == 'uz':
-                    await send_protected_message(message, f"{panic_data['name_uz']}")
+                    await send_protected_message(message, f"{panic_data['name_uz']}", photo=panic_data.get('photo'))
 
                 elif user_language['language_code'] == 'ru':
-                    await send_protected_message(message, f"{panic_data['name_ru']}")
+                    await send_protected_message(message, f"{panic_data['name_ru']}", photo=panic_data.get('photo'))
 
                 else:
-                    await send_protected_message(message, f"{panic_data['name_en']}")
+                    await send_protected_message(message, f"{panic_data['name_en']}", photo=panic_data.get('photo'))
 
             await state.clear()
             await state.set_state(PanicState.after_array)

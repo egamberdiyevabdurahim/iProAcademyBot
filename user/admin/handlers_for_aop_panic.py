@@ -177,13 +177,44 @@ async def add_aop_panic_name_en(message: Message, state: FSMContext):
                 await not_admin_message(message)
                 return
 
+            aop_panic_name = message.text
+            if aop_panic_name in BUTTONS_AND_COMMANDS:
+                await send_protected_message(message, "Invalid!")
+                return
+
+            await state.update_data(aop_panic_name_en=aop_panic_name)
+            await send_protected_message(message, "Send AOP Panic's photo:", reply_markup=skip_menu)
+            await state.set_state(AddAopPanicState.aop_panic_photo)
+
+        else:
+            await not_active_message(message)
+
+    else:
+        await not_registered_message(message)
+
+
+@router_for_aop_panic.message(AddAopPanicState.aop_panic_photo)
+async def add_aop_panic_photo(message: Message, state: FSMContext):
+    if is_user_registered(message.from_user.id):
+        if await is_active(message):
+            await activity_maker(message)
+
+            user_data = get_user_by_telegram_id_query(message.from_user.id)
+            if user_data['is_admin'] is False:
+                await not_admin_message(message)
+                return
+
             try:
-                aop_panic_name = message.text
-                if aop_panic_name in BUTTONS_AND_COMMANDS:
+                photo = None
+                if photo == 'Skip':
+                    pass
+
+                elif message.photo:
+                    photo = message.photo[-1].file_id
+
+                else:
                     await send_protected_message(message, "Invalid!")
                     return
-
-                await state.update_data(aop_panic_name_en=aop_panic_name)
 
                 state_data = await state.get_data()
                 aop_panic_code = state_data['aop_panic_code']
@@ -192,13 +223,14 @@ async def add_aop_panic_name_en(message: Message, state: FSMContext):
                 aop_panic_name_en = state_data['aop_panic_name_en']
                 user_id = get_user_by_telegram_id_query(message.from_user.id)['id']
 
-                await send_protected_message(message, f"AOP Panic {aop_panic_name} created successfully!")
+                await send_protected_message(message, f"AOP Panic {aop_panic_name_en} created successfully!")
 
                 insert_aop_panic_query(code=aop_panic_code,
                                        name_uz=aop_panic_name_uz,
                                        name_ru=aop_panic_name_ru,
                                        name_en=aop_panic_name_en,
-                                       user_id=user_id)
+                                       user_id=user_id,
+                                       photo=photo)
 
             except Exception as e:
                 print(str(e))
@@ -301,6 +333,7 @@ async def show_aop_panics(message: Message):
                                 f"Name UZ: {aop_panic['name_uz']}\n"
                                 f"Name RU: {aop_panic['name_ru']}\n"
                                 f"Name EN: {aop_panic['name_en']}\n"
+                                f"Image: {aop_panic['photo']}\n"
                                 f"Code: {aop_panic['code']}\n"
                                 f"User: {get_user_by_id_query(aop_panic['user_id'])['first_name']}\n"
                                 f"Created At: {aop_panic['created_at']}\n"
@@ -514,28 +547,62 @@ async def edit_panic_code(message: Message, state: FSMContext):
                 await not_admin_message(message)
                 return
 
+            code = message.text
+            if code == 'Skip':
+                code = None
+
+            else:
+                if code in BUTTONS_AND_COMMANDS:
+                    await send_protected_message(message, "Invalid!")
+                    await state.clear()
+                    return
+
+                aop_panic_data = get_aop_panic_by_code_query(code)
+                if aop_panic_data is not None:
+                    await send_protected_message(message, f"Bunday Codeli AOP Panic Mavjud!")
+                    await state.clear()
+                    return
+
+            await send_protected_message(message, "Send new photo", reply_markup=skip_menu)
+            await state.update_data(panic_code=code)
+            await state.set_state(EditAopPanicState.panic_photo)
+
+        else:
+            await not_active_message(message)
+
+    else:
+        await not_registered_message(message)
+
+
+@router_for_aop_panic.message(EditAopPanicState.panic_photo)
+async def edit_panic_photo(message: Message, state: FSMContext):
+    if is_user_registered(message.from_user.id):
+        if await is_active(message):
+            await activity_maker(message)
+
+            user_data = get_user_by_telegram_id_query(message.from_user.id)
+            if user_data['is_admin'] is False:
+                await not_admin_message(message)
+                return
+
             try:
-                code = message.text
-                if code == 'Skip':
-                    code = None
+                photo = None
+                if message.text == 'Skip':
+                    pass
+
+                elif message.photo:
+                    photo = message.photo[-1].file_id
 
                 else:
-                    if code in BUTTONS_AND_COMMANDS:
-                        await send_protected_message(message, "Invalid!")
-                        await state.clear()
-                        return
-
-                    aop_panic_data = get_aop_panic_by_code_query(code)
-                    if aop_panic_data is not None:
-                        await send_protected_message(message, f"Bunday Codeli AOP Panic Mavjud!")
-                        await state.clear()
-                        return
+                    await send_protected_message(message, "Invalid!")
+                    return
 
                 state_data = await state.get_data()
                 panic_name_uz = state_data.get('panic_name_uz')
                 panic_name_ru = state_data.get('panic_name_ru')
                 panic_name_en = state_data.get('panic_name_en')
                 panic_id = state_data.get('aop_panic_id')
+                code = state_data.get('panic_code')
 
                 panic_data = get_aop_panic_by_id_query(panic_id)
                 if panic_name_uz is None:
@@ -554,17 +621,23 @@ async def edit_panic_code(message: Message, state: FSMContext):
                                        new_name_uz=panic_name_uz,
                                        new_name_ru=panic_name_ru,
                                        new_name_en=panic_name_en,
-                                       code=code)
-                await send_protected_message(message, f"Bunday Codeli AOP Panic {code} Muvaffaqiyatli O'zgartirildi!")
-                await state.clear()
-                await aop_panic_management_go(message)
+                                       code=code,
+                                       new_photo=photo)
+                await send_protected_message(message, f"AOP Panic {code} Muvaffaqiyatli O'zgartirildi!")
+                await send_protected_message(message, f"Code: {code}\n"
+                                                      f"Name Uz: {panic_name_uz}\n"
+                                                      f"Name Ru: {panic_name_ru}\n"
+                                                      f"Name En: {panic_name_en}\n", photo=photo)
 
             except Exception as e:
                 print(str(e))
+
+            finally:
+                await state.clear()
+                await aop_panic_management_go(message)
 
         else:
             await not_active_message(message)
 
     else:
         await not_registered_message(message)
-

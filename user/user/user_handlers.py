@@ -207,7 +207,7 @@ async def profile_go(message: Message, user_id=None):
         await not_registered_message(message)
 
 
-@user_router.message(F.text.in_({"🔙Back To Apple Menu", "🔙Вернуться к Apple меню", "🔙Apple menyuga qaytish"}))
+@user_router.message(F.text.in_({"🔙Back To Apple Menu", "🔙Вернуться к Apple меню", "🔙Apple menyuga qaytish", "🔙Apple menyusiga qaytish"}))
 async def back_to_apple_menu(message: Message):
     if is_user_registered(message.from_user.id):
         if await is_active(message):

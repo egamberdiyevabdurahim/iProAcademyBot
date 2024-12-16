@@ -15,6 +15,7 @@ def create_i2c_table_query() -> None:
         name_uz TEXT NOT NULL,
         name_ru TEXT NOT NULL,
         name_en TEXT NOT NULL,
+        photo TEXT,
         chipset_id BIGINT REFERENCES chipset(id),
         user_id BIGINT REFERENCES users(id),
         category_id BIGINT REFERENCES i2c_category(id),
@@ -25,30 +26,31 @@ def create_i2c_table_query() -> None:
     return None
 
 
-def insert_i2c_query(name_uz: str, name_ru: str, name_en: str, chipset_id: int, user_id: int, category_id: int) -> None:
+def insert_i2c_query(name_uz: str, name_ru: str, name_en: str,
+                     chipset_id: int, user_id: int, category_id: int, photo=None) -> None:
     """
     Inserts a new I2C device into the i2c_device table.
     """
     query = """
-    INSERT INTO i2c (name_uz, name_ru, name_en, chipset_id, user_id, category_id)
-    VALUES (%s, %s, %s, %s, %s, %s)
+    INSERT INTO i2c (name_uz, name_ru, name_en, chipset_id, user_id, category_id, photo)
+    VALUES (%s, %s, %s, %s, %s, %s, %s)
     """
-    execute_query(query, (name_uz, name_ru, name_en, chipset_id, user_id, category_id))
+    execute_query(query, (name_uz, name_ru, name_en, chipset_id, user_id, category_id, photo))
     return None
 
 
 def update_i2c_query(id_of: int, new_name_uz: str, new_name_ru: str, new_name_en: str, chipset_id: int,
-                     user_id: int, category_id: int) -> None:
+                     user_id: int, category_id: int, new_photo=None) -> None:
     """
     Updates an I2C device.
     """
     query = """
     UPDATE i2c
-    SET name_uz=%s, name_ru=%s, name_en=%s, chipset_id=%s, user_id=%s, category_id=%s, updated_at=%s
+    SET name_uz=%s, name_ru=%s, name_en=%s, chipset_id=%s, user_id=%s, category_id=%s, updated_at=%s, photo=%s
     WHERE id=%s
     """
     execute_query(query, (new_name_uz, new_name_ru, new_name_en, chipset_id, user_id,
-                          category_id, datetime.now(), id_of))
+                          category_id, datetime.now(), new_photo, id_of))
     return None
 
 

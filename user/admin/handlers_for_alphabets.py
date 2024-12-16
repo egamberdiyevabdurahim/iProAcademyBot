@@ -184,6 +184,42 @@ async def add_alphabet_name_en(message: Message, state: FSMContext):
 
                 await state.update_data(alphabet_name_en=alphabet_name)
 
+                await send_protected_message(message, f"Send Photo:", reply_markup=skip_menu)
+                await state.set_state(AddAlphabetState.alphabet_photo)
+
+            except Exception as e:
+                print(str(e))
+
+        else:
+            await not_active_message(message)
+
+    else:
+        await not_registered_message(message)
+
+
+@router_for_alphabets.message(AddAlphabetState.alphabet_photo)
+async def add_alphabet_photo(message: Message, state: FSMContext):
+    if is_user_registered(message.from_user.id):
+        if await is_active(message):
+            await activity_maker(message)
+
+            user_data = get_user_by_telegram_id_query(message.from_user.id)
+            if user_data['is_admin'] is False:
+                await not_admin_message(message)
+                return
+
+            try:
+                photo = None
+                if message.text == 'Skip':
+                    pass
+
+                elif message.photo:
+                    photo = message.photo[-1].file_id
+
+                else:
+                    await send_protected_message(message, "Invalid!")
+                    return
+
                 state_data = await state.get_data()
                 alphabet_code = state_data['alphabet_code']
                 alphabet_name_uz = state_data['alphabet_name_uz']
@@ -191,13 +227,14 @@ async def add_alphabet_name_en(message: Message, state: FSMContext):
                 alphabet_name_en = state_data['alphabet_name_en']
                 user_id = get_user_by_telegram_id_query(message.from_user.id)['id']
 
-                await send_protected_message(message, f"Alphabet {alphabet_name} created successfully!")
+                await send_protected_message(message, f"Alphabet {alphabet_name_en} created successfully!")
 
                 insert_alphabet_query(code=alphabet_code,
                                       name_uz=alphabet_name_uz,
                                       name_ru=alphabet_name_ru,
                                       name_en=alphabet_name_en,
-                                      user_id=user_id)
+                                      user_id=user_id,
+                                      photo=photo)
 
             except Exception as e:
                 print(str(e))
@@ -302,6 +339,7 @@ async def show_alphabets(message: Message):
                                 f"Name UZ: {alphabet['name_uz']}\n"
                                 f"Name RU: {alphabet['name_ru']}\n"
                                 f"Name EN: {alphabet['name_en']}\n"
+                                f"Image: {alphabet['photo']}\n"
                                 f"Code: {alphabet['code']}\n"
                                 f"User: {get_user_by_id_query(alphabet['user_id'])['first_name']}\n"
                                 f"Created At: {alphabet['created_at']}\n"
@@ -514,29 +552,57 @@ async def edit_alphabet_new_code(message: Message, state: FSMContext):
                 await not_admin_message(message)
                 return
 
+            alphabet_code = message.text
+            if alphabet_code == "Skip":
+                alphabet_code = None
+            if alphabet_code in BUTTONS_AND_COMMANDS:
+                await send_protected_message(message, "Invalid!")
+                return
+
+            await state.update_data(alphabet_new_code=alphabet_code)
+            await send_protected_message(message, "Send new photo:", reply_markup=skip_menu)
+            await state.set_state(EditAlphabetState.alphabet_new_photo)
+
+        else:
+            await not_active_message(message)
+
+    else:
+        await not_registered_message(message)
+
+
+@router_for_alphabets.message(EditAlphabetState.alphabet_new_photo)
+async def edit_alphabet_new_photo(message: Message, state: FSMContext):
+    if is_user_registered(message.from_user.id):
+        if await is_active(message):
+            await activity_maker(message)
+
+            user_data = get_user_by_telegram_id_query(message.from_user.id)
+            if user_data['is_admin'] is False:
+                await not_admin_message(message)
+                return
+
             try:
-                alphabet_code = message.text
-                if alphabet_code == "Skip":
-                    alphabet_code = None
-                if alphabet_code in BUTTONS_AND_COMMANDS:
+                photo = None
+                if message.text == 'Skip':
+                    pass
+
+                elif message.photo:
+                    photo = message.photo[-1].file_id
+
+                else:
                     await send_protected_message(message, "Invalid!")
                     return
 
                 state_data = await state.get_data()
                 alphabet_id = state_data['alphabet_id']
+                alphabet_code = state_data['alphabet_new_code']
                 alphabet_name_uz = state_data['alphabet_new_name_uz']
                 alphabet_name_ru = state_data['alphabet_new_name_ru']
                 alphabet_name_en = state_data['alphabet_new_name_en']
 
                 alphabet_real_data = get_alphabet_by_id_query(alphabet_id)
 
-                if alphabet_code is not None:
-                    alphabet_data = get_alphabet_by_code_query(alphabet_code)
-                    if alphabet_data['code'] == alphabet_code and alphabet_data['id'] != alphabet_id:
-                        await send_protected_message(message, "This code is already exists!")
-                        return
-
-                else:
+                if not alphabet_code:
                     alphabet_code = alphabet_real_data['code']
 
                 if not alphabet_name_uz:
@@ -548,20 +614,22 @@ async def edit_alphabet_new_code(message: Message, state: FSMContext):
                 if not alphabet_name_en:
                     alphabet_name_en = alphabet_real_data['name_en']
 
-                print("aaaaaa")
+                if not photo:
+                    photo = alphabet_real_data['photo']
 
                 update_alphabet_query(alphabet_id=alphabet_id,
                                       new_code=alphabet_code,
                                       new_name_uz=alphabet_name_uz,
                                       new_name_ru=alphabet_name_ru,
-                                      new_name_en=alphabet_name_en)
+                                      new_name_en=alphabet_name_en,
+                                      new_photo=photo)
 
                 await send_protected_message(message, "Alphabet successfully edited\n"
                                                       "Edited data:\n"
                                                       f"Code: {alphabet_code}\n"
                                                       f"Name UZ: {alphabet_name_uz}\n"
                                                       f"Name RU: {alphabet_name_ru}\n"
-                                                      f"Name EN: {alphabet_name_en}")
+                                                      f"Name EN: {alphabet_name_en}", photo=photo)
 
             except Exception as e:
                 print(str(e))
@@ -569,3 +637,9 @@ async def edit_alphabet_new_code(message: Message, state: FSMContext):
             finally:
                 await state.clear()
                 await before_alphabet_management(message)
+
+        else:
+            await not_active_message(message)
+
+    else:
+        await not_registered_message(message)

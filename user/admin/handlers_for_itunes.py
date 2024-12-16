@@ -195,22 +195,62 @@ async def itunes_management_add_name_en(message: Message, state: FSMContext):
                 await state.clear()
                 return
 
-            itunes_data = await state.get_data()
-            itunes_error_code = itunes_data.get('itunes_error_code')
-            itunes_name_uz = itunes_data.get('itunes_name_uz')
-            itunes_name_ru = itunes_data.get('itunes_name_ru')
-            itunes_name_en = name_en
-            user_id = get_user_by_telegram_id_query(message.from_user.id)['id']
+            await send_protected_message(message, "Send photo:", reply_markup=skip_menu)
+            await state.update_data(itunes_name_en=name_en)
+            await state.set_state(AddITunesState.itunes_photo)
 
-            insert_itunes_query(error_code=itunes_error_code,
-                                name_uz=itunes_name_uz,
-                                name_ru=itunes_name_ru,
-                                name_en=itunes_name_en,
-                                user_id=user_id)
+        else:
+            await not_active_message(message)
 
-            await send_protected_message(message, "iTunes added successfully.")
-            await state.clear()
-            await itunes_management_go(message)
+    else:
+        await not_registered_message(message)
+
+
+@router_for_itunes.message(AddITunesState.itunes_photo)
+async def itunes_management_add_photo(message: Message, state: FSMContext):
+    if is_user_registered(message.from_user.id):
+        if await is_active(message):
+            await activity_maker(message)
+
+            user_data = get_user_by_telegram_id_query(message.from_user.id)
+            if user_data['is_admin'] is False:
+                await not_admin_message(message)
+                return
+
+            try:
+                photo = None
+                if message.text == 'Skip':
+                    pass
+
+                elif message.photo:
+                    photo = message.photo[-1].file_id
+
+                else:
+                    await send_protected_message(message, "Invalid!")
+                    return
+
+                itunes_data = await state.get_data()
+                itunes_error_code = itunes_data.get('itunes_error_code')
+                itunes_name_uz = itunes_data.get('itunes_name_uz')
+                itunes_name_ru = itunes_data.get('itunes_name_ru')
+                itunes_name_en = itunes_data.get('itunes_name_en')
+                user_id = get_user_by_telegram_id_query(message.from_user.id)['id']
+
+                insert_itunes_query(error_code=itunes_error_code,
+                                    name_uz=itunes_name_uz,
+                                    name_ru=itunes_name_ru,
+                                    name_en=itunes_name_en,
+                                    user_id=user_id,
+                                    photo=photo)
+
+                await send_protected_message(message, "iTunes added successfully.")
+
+            except Exception as e:
+                print(str(e))
+
+            finally:
+                await state.clear()
+                await itunes_management_go(message)
 
         else:
             await not_active_message(message)
@@ -310,6 +350,7 @@ async def itunes_management_show_all_go(message: Message, state: FSMContext):
                                 f"Name UZ: {itunes['name_uz']}\n"
                                 f"Name RU: {itunes['name_ru']}\n"
                                 f"Name EN: {itunes['name_en']}\n"
+                                f"Image: {itunes['photo']}\n"
                                 f"Error Code: {itunes['error_code']}\n"
                                 f"Created At: {itunes['created_at']}\n"
                                 f"Updated At: {itunes['updated_at']}\n"
@@ -546,34 +587,79 @@ async def itunes_management_edit_new_error_code(message: Message, state: FSMCont
                     await state.clear()
                     return
 
-            itunes_data = await state.get_data()
-            itunes_id = itunes_data['itunes_id']
-            new_name_en = itunes_data.get('itunes_new_name_en')
-            new_name_ru = itunes_data.get('itunes_new_name_ru')
-            new_name_uz = itunes_data.get('itunes_new_name_uz')
+            await state.update_data(itunes_new_error_code=new_error_code)
+            await send_protected_message(message, "Send new photo:", reply_markup=skip_menu)
+            await state.set_state(EditITunesState.itunes_new_photo)
 
-            org_itunes_data = get_itunes_by_id_query(itunes_id)
-            if new_name_en is None:
-                new_name_en = org_itunes_data['name_en']
+        else:
+            await not_active_message(message)
 
-            if new_name_ru is None:
-                new_name_ru = org_itunes_data['name_ru']
+    else:
+        await not_registered_message(message)
 
-            if new_name_uz is None:
-                new_name_uz = org_itunes_data['name_uz']
 
-            if new_error_code is None:
-                new_error_code = org_itunes_data['error_code']
+@router_for_itunes.message(EditITunesState.itunes_new_photo)
+async def itunes_management_edit_new_photo(message: Message, state: FSMContext):
+    if is_user_registered(message.from_user.id):
+        if await is_active(message):
+            await activity_maker(message)
 
-            update_itunes_query(itunes_id=itunes_id,
-                                new_name_en=new_name_en,
-                                new_name_ru=new_name_ru,
-                                new_name_uz=new_name_uz,
-                                new_error_code=new_error_code)
+            user_data = get_user_by_telegram_id_query(message.from_user.id)
+            if user_data['is_admin'] is False:
+                await not_admin_message(message)
+                return
 
-            await send_protected_message(message, f"iTunes with error code {new_error_code} updated successfully!")
-            await state.clear()
-            await itunes_management_go(message)
+            try:
+                photo = None
+                if message.text == 'Skip':
+                    pass
+
+                elif message.photo:
+                    photo = message.photo[-1].file_id
+
+                else:
+                    await send_protected_message(message, "Invalid!")
+                    return
+
+                itunes_data = await state.get_data()
+                itunes_id = itunes_data['itunes_id']
+                new_name_en = itunes_data.get('itunes_new_name_en')
+                new_name_ru = itunes_data.get('itunes_new_name_ru')
+                new_name_uz = itunes_data.get('itunes_new_name_uz')
+                new_error_code = itunes_data.get('itunes_new_error_code')
+
+                org_itunes_data = get_itunes_by_id_query(itunes_id)
+                if new_name_en is None:
+                    new_name_en = org_itunes_data['name_en']
+
+                if new_name_ru is None:
+                    new_name_ru = org_itunes_data['name_ru']
+
+                if new_name_uz is None:
+                    new_name_uz = org_itunes_data['name_uz']
+
+                if new_error_code is None:
+                    new_error_code = org_itunes_data['error_code']
+
+                update_itunes_query(itunes_id=itunes_id,
+                                    new_name_en=new_name_en,
+                                    new_name_ru=new_name_ru,
+                                    new_name_uz=new_name_uz,
+                                    new_error_code=new_error_code,
+                                    new_photo=photo)
+
+                await send_protected_message(message, f"iTunes with error code {new_error_code} updated successfully!")
+                await send_protected_message(message, f"Error Code: {new_error_code}\n"
+                                                      f"Name UZ: {new_name_uz}\n"
+                                                      f"Name RU: {new_name_ru}\n"
+                                                      f"Name EN: {new_name_en}\n", photo=photo)
+
+            except Exception as e:
+                print(str(e))
+
+            finally:
+                await state.clear()
+                await itunes_management_go(message)
 
         else:
             await not_active_message(message)

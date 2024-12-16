@@ -13,6 +13,7 @@ def create_alphabets_table_query() -> None:
         name_uz TEXT NOT NULL,
         name_ru TEXT NOT NULL,
         name_en TEXT NOT NULL,
+        photo TEXT,
         code VARCHAR(64) NOT NULL,
         user_id BIGINT NOT NULL REFERENCES users(id),
         status BOOLEAN DEFAULT TRUE,
@@ -22,28 +23,29 @@ def create_alphabets_table_query() -> None:
     return None
 
 
-def insert_alphabet_query(name_uz: str, name_ru: str, name_en: str, code: str, user_id: int) -> None:
+def insert_alphabet_query(name_uz: str, name_ru: str, name_en: str, code: str, user_id: int, photo: str=None) -> None:
     """
     Inserts a new alphabet into the alphabets table.
     """
     query = """
-    INSERT INTO alphabets (name_uz, name_ru, name_en, code, user_id)
-    VALUES (%s, %s, %s, %s, %s)
+    INSERT INTO alphabets (name_uz, name_ru, name_en, code, user_id, photo)
+    VALUES (%s, %s, %s, %s, %s, %s)
     """
-    execute_query(query, (name_uz, name_ru, name_en, code, user_id))
+    execute_query(query, (name_uz, name_ru, name_en, code, user_id, photo))
     return None
 
 
-def update_alphabet_query(alphabet_id: int, new_name_uz: str, new_name_ru: str, new_name_en: str, new_code: str) -> None:
+def update_alphabet_query(alphabet_id: int, new_name_uz: str, new_name_ru: str,
+                          new_name_en: str, new_code: str, new_photo=None) -> None:
     """
     Updates the name or code of an alphabet.
     """
     query = """
     UPDATE alphabets
-    SET name_uz=%s, name_ru=%s, name_en=%s, code=%s, updated_at=NOW()
+    SET name_uz=%s, name_ru=%s, name_en=%s, code=%s, photo=%s, updated_at=NOW()
     WHERE id=%s
     """
-    execute_query(query, (new_name_uz, new_name_ru, new_name_en, new_code, alphabet_id))
+    execute_query(query, (new_name_uz, new_name_ru, new_name_en, new_code, new_photo, alphabet_id))
     return None
 
 

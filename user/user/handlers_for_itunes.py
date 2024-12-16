@@ -24,13 +24,13 @@ async def user_itunes_data_go(message: Message, state: FSMContext):
         await send_protected_message(message, f"Error code {message.text} not found.")
 
     if language == 'uz':
-        await send_protected_message(message, content=data['name_uz'])
+        await send_protected_message(message, content=data['name_uz'], photo=data.get('photo'))
 
     elif language == 'ru':
-        await send_protected_message(message, content=data['name_ru'])
+        await send_protected_message(message, content=data['name_ru'], photo=data.get('photo'))
 
     else:
-        await send_protected_message(message, content=data['name_en'])
+        await send_protected_message(message, content=data['name_en'], photo=data.get('photo'))
 
     await state.clear()
     await state.set_state(ITunesState.to_data)

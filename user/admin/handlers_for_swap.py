@@ -682,5 +682,10 @@ async def edit_swap_end(message: Message, data):
 
     # Confirmation message
     await send_protected_message(message, "Swap Helper edited successfully!")
+    await send_protected_message(message, f"Model ID: {swap_model_id}\n"
+                                          f"Title: {swap_title}\n"
+                                          f"Name UZ: {swap_name_uz}\n"
+                                          f"Name RU: {swap_name_ru}\n"
+                                          f"Name EN: {swap_name_en}\n", media_group=swap_photos)
 
     await before_swap_management(message)

@@ -13,6 +13,7 @@ def create_itunes_table_query() -> None:
     name_uz VARCHAR(255) NOT NULL,
     name_ru VARCHAR(255) NOT NULL,
     name_en VARCHAR(255) NOT NULL,
+    photo TEXT,
     error_code VARCHAR(255) NOT NULL,
     user_id BIGINT REFERENCES users(id),
     status BOOLEAN DEFAULT TRUE,
@@ -21,26 +22,27 @@ def create_itunes_table_query() -> None:
     return None
 
 
-def insert_itunes_query(name_uz: str, name_ru: str, name_en: str, error_code: str, user_id: int) -> None:
+def insert_itunes_query(name_uz: str, name_ru: str, name_en: str, error_code: str, user_id: int, photo=None) -> None:
     """
     Inserts a new itunes request into the itunes table.
     """
     execute_query("""
-    INSERT INTO itunes (name_uz, name_ru, name_en, error_code, user_id)
+    INSERT INTO itunes (name_uz, name_ru, name_en, error_code, user_id, photo)
     VALUES (%s, %s, %s, %s, %s)
-    """, (name_uz, name_ru, name_en, error_code, user_id))
+    """, (name_uz, name_ru, name_en, error_code, user_id, photo))
     return None
 
 
-def update_itunes_query(itunes_id: int, new_name_uz: str, new_name_ru: str, new_name_en: str, new_error_code: str) -> None:
+def update_itunes_query(itunes_id: int, new_name_uz: str, new_name_ru: str,
+                        new_name_en: str, new_error_code: str, new_photo=None) -> None:
     """
     Updates an itunes request.
     """
     execute_query("""
     UPDATE itunes
-    SET name_uz=%s, name_ru=%s, name_en=%s, error_code=%s, updated_at=NOW()
+    SET name_uz=%s, name_ru=%s, name_en=%s, error_code=%s, updated_at=NOW(), photo=%s
     WHERE id=%s
-    """, (new_name_uz, new_name_ru, new_name_en, new_error_code, itunes_id))
+    """, (new_name_uz, new_name_ru, new_name_en, new_error_code, new_photo, itunes_id))
     return None
 
 

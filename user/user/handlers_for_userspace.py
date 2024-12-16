@@ -30,13 +30,13 @@ async def user_space_data_go(message: Message, state: FSMContext):
             user_language = get_user_by_telegram_id_query(message.from_user.id)['language_code']
             if data is not None:
                 if user_language == "uz":
-                    await send_protected_message(message, data['name_uz'])
+                    await send_protected_message(message, data['name_uz'], photo=data.get('photo'))
 
                 elif user_language == "ru":
-                    await send_protected_message(message, data['name_ru'])
+                    await send_protected_message(message, data['name_ru'], photo=data.get('photo'))
 
                 else:
-                    await send_protected_message(message, data['name_en'])
+                    await send_protected_message(message, data['name_en'], photo=data.get('photo'))
 
             else:
                 await userspace_go(message, state)

@@ -66,13 +66,13 @@ async def i2c_to_chipset_go(message: Message, state: FSMContext):
 
             else:
                 if user_language == "uz":
-                    await send_protected_message(message, data['name_uz'])
+                    await send_protected_message(message, data['name_uz'], photo=data.get('photo'))
 
                 elif user_language == "ru":
-                    await send_protected_message(message, data['name_ru'])
+                    await send_protected_message(message, data['name_ru'], photo=data.get('photo'))
 
                 else:
-                    await send_protected_message(message, data['name_en'])
+                    await send_protected_message(message, data['name_en'], photo=data.get('photo'))
 
         else:
             await not_active_message(message)

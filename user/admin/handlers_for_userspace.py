@@ -177,13 +177,44 @@ async def add_userspace_name_en(message: Message, state: FSMContext):
                 await not_admin_message(message)
                 return
 
+            user_space_name = message.text
+            if user_space_name in BUTTONS_AND_COMMANDS:
+                await send_protected_message(message, "Invalid!")
+                return
+
+            await state.update_data(user_space_name_en=user_space_name)
+            await send_protected_message(message, "Send photo:", reply_markup=skip_menu)
+            await state.set_state(AddUserSpaceState.user_space_photo)
+
+        else:
+            await not_active_message(message)
+
+    else:
+        await not_registered_message(message)
+
+
+@router_for_userspace.message(AddUserSpaceState.user_space_photo)
+async def add_user_space_photo(message: Message, state: FSMContext):
+    if is_user_registered(message.from_user.id):
+        if await is_active(message):
+            await activity_maker(message)
+
+            user_data = get_user_by_telegram_id_query(message.from_user.id)
+            if user_data['is_admin'] is False:
+                await not_admin_message(message)
+                return
+
             try:
-                user_space_name = message.text
-                if user_space_name in BUTTONS_AND_COMMANDS:
+                photo = None
+                if message.text == 'Skip':
+                    pass
+
+                elif message.photo:
+                    photo = message.photo[-1].file_id
+
+                else:
                     await send_protected_message(message, "Invalid!")
                     return
-
-                await state.update_data(user_space_name_en=user_space_name)
 
                 user_space_data = await state.get_data()
                 user_space_code = user_space_data['user_space_code']
@@ -197,7 +228,8 @@ async def add_userspace_name_en(message: Message, state: FSMContext):
                                        name_ru=user_space_name_ru,
                                        name_en=user_space_name_en,
                                        code=user_space_code,
-                                       user_id=user_id)
+                                       user_id=user_id,
+                                       photo=photo)
 
             except Exception as e:
                 print(str(e))
@@ -305,6 +337,7 @@ async def show_user_spaces(message: Message):
                                 f"Name UZ: {user_space['name_uz']}\n"
                                 f"Name RU: {user_space['name_ru']}\n"
                                 f"Name EN: {user_space['name_en']}\n"
+                                f"Image: {user_space['photo']}\n"
                                 f"Code: {user_space['code']}\n"
                                 f"User: {get_user_by_id_query(user_space['user_id'])['first_name']}\n"
                                 f"Created At: {user_space['created_at']}\n"
@@ -566,30 +599,64 @@ async def edit_userspace_new_code(message: Message, state: FSMContext):
                 await state.clear()
                 return
 
+            new_code = message.text
+            if new_code == "Skip":
+                new_code = None
+
+            else:
+                if new_code in BUTTONS_AND_COMMANDS:
+                    await send_protected_message(message, "Invalid!")
+                    await state.clear()
+                    await userspace_menu(message)
+                    return
+
+                user_space_data = get_userspace_by_code_query(new_code)
+                if user_space_data:
+                    await send_protected_message(message, f"Bunday Kodli UserSpace Mavjud!")
+                    await state.clear()
+                    await userspace_menu(message)
+                    return
+
+            await state.update_data(user_space_new_code=new_code)
+            await send_protected_message(message, "Send new photo:", reply_markup=skip_menu)
+            await state.set_state(EditUserSpaceState.user_space_new_photo)
+
+        else:
+            await not_active_message(message)
+
+    else:
+        await not_registered_message(message)
+
+
+@router_for_userspace.message(EditUserSpaceState.user_space_new_photo)
+async def edit_user_space_new_photo(message: Message, state: FSMContext):
+    if is_user_registered(message.from_user.id):
+        if await is_active(message):
+            await activity_maker(message)
+
+            user_data = get_user_by_telegram_id_query(message.from_user.id)
+            if user_data['is_admin'] is False:
+                await not_admin_message(message)
+                return
+
             try:
-                new_code = message.text
-                if new_code == "Skip":
-                    new_code = None
+                photo = None
+                if message.text == 'Skip':
+                    pass
+
+                elif message.photo:
+                    photo = message.photo[-1].file_id
 
                 else:
-                    if new_code in BUTTONS_AND_COMMANDS:
-                        await send_protected_message(message, "Invalid!")
-                        await state.clear()
-                        await userspace_menu(message)
-                        return
-
-                    user_space_data = get_userspace_by_code_query(new_code)
-                    if user_space_data:
-                        await send_protected_message(message, f"Bunday Kodli UserSpace Mavjud!")
-                        await state.clear()
-                        await userspace_menu(message)
-                        return
+                    await send_protected_message(message, "Invalid!")
+                    return
 
                 state_data = await state.get_data()
                 user_space_id = state_data.get("user_space_id")
                 user_space_new_name_uz = state_data.get("user_space_new_name_uz")
                 user_space_new_name_ru = state_data.get("user_space_new_name_ru")
                 user_space_new_name_en = state_data.get("user_space_new_name_en")
+                new_code = state_data.get("user_space_new_code")
 
                 user_space_data = get_userspace_by_id_query(user_space_id)
                 if user_space_new_name_uz is None:
@@ -604,18 +671,26 @@ async def edit_userspace_new_code(message: Message, state: FSMContext):
                 if new_code is None:
                     new_code = user_space_data.get("code")
 
+                if photo is None:
+                    photo = user_space_data.get("photo")
+
                 update_userspace_query(userspace_id=user_space_id,
                                        new_name_uz=user_space_new_name_uz,
                                        new_name_ru=user_space_new_name_ru,
                                        new_name_en=user_space_new_name_en,
-                                       code=new_code)
+                                       code=new_code,
+                                       new_photo=photo)
 
-                await send_protected_message(message, "User Space Muvaffaqiyatli O'zgartirildi!")
-                await state.clear()
-                await userspace_menu(message)
+                await send_protected_message(message, "User Space edited successfully!")
+                await send_protected_message(message, f"Name Uz: {user_space_new_name_uz}\n"
+                                                      f"Name Ru: {user_space_new_name_ru}\n"
+                                                      f"Name En: {user_space_new_name_en}\n"
+                                                      f"Code: {new_code}\n", photo=photo)
 
             except Exception as e:
                 print(str(e))
+
+            finally:
                 await state.clear()
                 await userspace_menu(message)
 

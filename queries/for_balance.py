@@ -144,10 +144,10 @@ def get_all_future_active_balance_query() -> list:
     Retrieves all active balance records from the database where both is_active and status are TRUE.
     """
     query = """
-        SELECT * 
-        FROM balance 
+        SELECT *
+        FROM balance
         WHERE is_active = FALSE AND starts_at = %s
-        AND status = TRUE 
+        AND status = TRUE
         ORDER BY starts_at
     """
     return execute_query(query, (datetime.date(datetime.now()),), fetch="all")

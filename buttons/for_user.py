@@ -95,7 +95,7 @@ apple_menu_ru = ReplyKeyboardMarkup(keyboard=[
 
 
 apple_menu_uz = ReplyKeyboardMarkup(keyboard=[
-    [KeyboardButton(text="PANIK"), KeyboardButton(text="SWAP")],
+    [KeyboardButton(text="PANIC"), KeyboardButton(text="SWAP")],
     [KeyboardButton(text="iTunes")],
     [KeyboardButton(text="🔝Asosiy Menyu")]],
     resize_keyboard=True,

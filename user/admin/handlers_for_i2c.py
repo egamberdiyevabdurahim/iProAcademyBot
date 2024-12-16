@@ -7,8 +7,8 @@ from aiogram.types import Message, FSInputFile
 from buttons.for_admin import i2c_management_menu
 from buttons.for_others import skip_menu
 from queries.for_chipset import get_all_chipsets_query, get_chipset_by_id_query
-from queries.for_i2c import insert_i2c_query, delete_i2c_query, get_all_i2cs_query, get_i2c_by_name_uz_query, \
-    get_i2c_by_name_ru_query, get_i2c_by_name_en_query, get_i2c_by_category_and_chipset_query, get_i2c_by_id_query, \
+from queries.for_i2c import insert_i2c_query, delete_i2c_query, get_all_i2cs_query, \
+    get_i2c_by_category_and_chipset_query, get_i2c_by_id_query, \
     update_i2c_query
 from queries.for_i2c_category import get_all_i2c_categories_query, get_i2c_category_by_id_query
 from queries.for_users import get_user_by_telegram_id_query, get_user_by_id_query
@@ -142,7 +142,7 @@ async def add_i2c_ru(message: Message, state: FSMContext):
 
 
 @router_for_i2c.message(AddI2CState.i2c_name_en)
-async def add_i2c_go(message: Message, state: FSMContext):
+async def add_i2c_en(message: Message, state: FSMContext):
     if is_user_registered(message.from_user.id):
         if await is_active(message):
             await activity_maker(message)
@@ -241,20 +241,52 @@ async def add_i2c_category_id(message: Message, state: FSMContext):
                 await not_admin_message(message)
                 return
 
+            category_id = message.text
+            if not category_id.isnumeric():
+                await send_protected_message(message, "Bu IDli i2c Category Mavjud Emas!")
+                await state.clear()
+                return
+
+            category_data = get_i2c_category_by_id_query(int(category_id))
+            if category_data is None:
+                await send_protected_message(message, "Bu IDli i2c Category Mavjud Emas!")
+                await state.clear()
+                return
+
+            await state.update_data(category_id=category_id)
+            await send_protected_message(message, f"Send i2c's photo:", reply_markup=skip_menu)
+            await state.set_state(AddI2CState.i2c_photo)
+
+        else:
+            await not_active_message(message)
+
+    else:
+        await not_registered_message(message)
+
+
+@router_for_i2c.message(AddI2CState.i2c_photo)
+async def add_i2c_photo(message: Message, state: FSMContext):
+    if is_user_registered(message.from_user.id):
+        if await is_active(message):
+            await activity_maker(message)
+
+            user_data = get_user_by_telegram_id_query(message.from_user.id)
+            if user_data['is_admin'] is False:
+                await not_admin_message(message)
+                return
+
             try:
-                category_id = message.text
-                if not category_id.isnumeric():
-                    await send_protected_message(message, "Bu IDli i2c Category Mavjud Emas!")
-                    await state.clear()
+                photo = None
+                if message.text == 'Skip':
+                    pass
+
+                elif message.photo:
+                    photo = message.photo[-1].file_id
+
+                else:
+                    await send_protected_message(message, "Invalid!")
                     return
 
-                category_data = get_i2c_category_by_id_query(int(category_id))
-                if category_data is None:
-                    await send_protected_message(message, "Bu IDli i2c Category Mavjud Emas!")
-                    await state.clear()
-                    return
-
-                await state.update_data(category_id=category_id)
                 state_data = await state.get_data()
                 i2c_name_uz = state_data['i2c_name_uz']
                 i2c_name_ru = state_data['i2c_name_ru']
@@ -266,7 +298,6 @@ async def add_i2c_category_id(message: Message, state: FSMContext):
                 allowed_data = get_i2c_by_category_and_chipset_query(category_id=category_id, chipset_id=chipset_id)
                 if allowed_data is not None:
                     await send_protected_message(message, "Bu kategoriyada bu chipsetda i2c mavjud bo'lishi mumkin!")
-                    await state.clear()
                     return
 
                 await send_protected_message(message, f"i2c {i2c_name_uz} created successfully!")
@@ -276,7 +307,8 @@ async def add_i2c_category_id(message: Message, state: FSMContext):
                                  name_en=i2c_name_en,
                                  chipset_id=chipset_id,
                                  category_id=category_id,
-                                 user_id=user_id)
+                                 user_id=user_id,
+                                 photo=photo)
 
             except Exception as e:
                 print(str(e))
@@ -434,6 +466,7 @@ async def show_i2cs(message: Message):
                                 f"Name UZ: {i2c['name_uz']}\n"
                                 f"Name RU: {i2c['name_ru']}\n"
                                 f"Name EN: {i2c['name_en']}\n"
+                                f"Image: {i2c['photo']}\n"
                                 f"Chipset: {get_chipset_by_id_query(i2c['chipset_id'])['name']}\n"
                                 f"Category: {get_i2c_category_by_id_query(i2c['category_id'])['name']}\n"
                                 f"User: {get_user_by_id_query(i2c['user_id'])['first_name']}\n"
@@ -785,52 +818,97 @@ async def edit_category_id(message: Message, state: FSMContext):
                     await i2c_management_go(message)
                     return
 
-            state_data = await state.get_data()
-            i2c_id = state_data.get("i2c_id")
-            i2c_new_name_uz = state_data.get('i2c_new_name_uz')
-            i2c_new_name_ru = state_data.get('i2c_new_name_ru')
-            i2c_new_name_en = state_data.get('i2c_new_name_en')
-            chipset_id = state_data.get('chipset_id')
+            await state.update_data(category_id=category_id)
+            await send_protected_message(message, "Send new photo", reply_markup=skip_menu)
+            await state.set_state(EditI2CState.i2c_new_photo)
 
-            i2c_data = get_i2c_by_id_query(i2c_id)
+        else:
+            await not_active_message(message)
 
-            skip1 = False
-            skip2 = False
-            if i2c_new_name_uz is None:
-                i2c_new_name_uz = i2c_data['name_uz']
+    else:
+        await not_registered_message(message)
 
-            if i2c_new_name_ru is None:
-                i2c_new_name_ru = i2c_data['name_ru']
 
-            if i2c_new_name_en is None:
-                i2c_new_name_en = i2c_data['name_en']
+@router_for_i2c.message(EditI2CState.i2c_new_photo)
+async def edit_i2c_new_photo(message: Message, state: FSMContext):
+    if is_user_registered(message.from_user.id):
+        if await is_active(message):
+            await activity_maker(message)
 
-            if chipset_id is None:
-                skip1 = True
-                chipset_id = i2c_data['chipset_id']
+            user_data = get_user_by_telegram_id_query(message.from_user.id)
+            if user_data['is_admin'] is False:
+                await not_admin_message(message)
+                return
 
-            if category_id is None:
-                skip2 = True
-                category_id = i2c_data['category_id']
+            try:
+                photo = None
+                if message.text == 'Skip':
+                    pass
 
-            if not skip1 and not skip2:
-                if get_i2c_by_category_and_chipset_query(category_id, chipset_id) is not None:
-                    await send_protected_message(message, "Bunday idlik kategoriya va chipset mavjud!")
-                    await state.clear()
-                    await i2c_management_go(message)
+                elif message.photo:
+                    photo = message.photo[-1].file_id
+
+                else:
+                    await send_protected_message(message, "Invalid!")
                     return
 
-            update_i2c_query(id_of=i2c_id,
-                             new_name_uz=i2c_new_name_uz,
-                             new_name_ru=i2c_new_name_ru,
-                             new_name_en=i2c_new_name_en,
-                             chipset_id=chipset_id,
-                             category_id=category_id,
-                             user_id=user_data['id'])
+                state_data = await state.get_data()
+                i2c_id = state_data.get("i2c_id")
+                i2c_new_name_uz = state_data.get('i2c_new_name_uz')
+                i2c_new_name_ru = state_data.get('i2c_new_name_ru')
+                i2c_new_name_en = state_data.get('i2c_new_name_en')
+                chipset_id = state_data.get('chipset_id')
+                category_id = state_data.get('category_id')
 
-            await send_protected_message(message, "I2C updated successfully!")
-            await state.clear()
-            await i2c_management_go(message)
+                i2c_data = get_i2c_by_id_query(i2c_id)
+
+                skip1 = False
+                skip2 = False
+                if i2c_new_name_uz is None:
+                    i2c_new_name_uz = i2c_data['name_uz']
+
+                if i2c_new_name_ru is None:
+                    i2c_new_name_ru = i2c_data['name_ru']
+
+                if i2c_new_name_en is None:
+                    i2c_new_name_en = i2c_data['name_en']
+
+                if chipset_id is None:
+                    skip1 = True
+                    chipset_id = i2c_data['chipset_id']
+
+                if category_id is None:
+                    skip2 = True
+                    category_id = i2c_data['category_id']
+
+                if not skip1 and not skip2:
+                    if get_i2c_by_category_and_chipset_query(category_id, chipset_id) is not None:
+                        await send_protected_message(message, "Bunday idlik kategoriya va chipset mavjud!")
+                        await state.clear()
+                        await i2c_management_go(message)
+                        return
+
+                update_i2c_query(id_of=i2c_id,
+                                 new_name_uz=i2c_new_name_uz,
+                                 new_name_ru=i2c_new_name_ru,
+                                 new_name_en=i2c_new_name_en,
+                                 chipset_id=chipset_id,
+                                 category_id=category_id,
+                                 user_id=user_data['id'])
+
+                await send_protected_message(message, "I2C updated successfully!")
+                await send_protected_message(message, f"Name Uz: {i2c_new_name_uz}\n"
+                                                      f"Name Ru: {i2c_new_name_ru}\n"
+                                                      f"Name En: {i2c_new_name_en}\n"
+                                                      f"Chipset ID: {chipset_id}\n"
+                                                      f"Category ID: {category_id}", photo=photo)
+
+            except Exception as e:
+                print(str(e))
+
+            finally:
+                await state.clear()
+                await i2c_management_go(message)
 
         else:
             await not_active_message(message)

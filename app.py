@@ -98,11 +98,11 @@ async def main():
 
 async def init():
     # Schedule the async tasks
-    schedule.every().day.at("01:00").do(lambda: asyncio.create_task(balance_activator()))  # schedule async task
-    schedule.every().day.at("00:30").do(lambda: asyncio.create_task(balance_calculater()))  # schedule async task
-    schedule.every().day.at("00:05").do(lambda: asyncio.create_task(message_deleter()))  # schedule async task
-    schedule.every().day.at("12:00").do(lambda: asyncio.create_task(end_date_checker()))  # schedule async task
-    schedule.every().day.at("00:00").do(lambda: asyncio.create_task(dump_and_send()))
+    # schedule.every().day.at("20:00").do(lambda: asyncio.create_task(balance_activator()))  # schedule async task
+    # schedule.every().day.at("19:30").do(lambda: asyncio.create_task(balance_calculater()))  # schedule async task
+    # schedule.every().day.at("19:05").do(lambda: asyncio.create_task(message_deleter()))  # schedule async task
+    # schedule.every().day.at("7:00").do(lambda: asyncio.create_task(end_date_checker()))  # schedule async task
+    # schedule.every().day.at("19:00").do(lambda: asyncio.create_task(dump_and_send()))
 
     # Run asyncio tasks concurrently with the schedule
     await asyncio.gather(main(), schedule_task_for_inactivate())
